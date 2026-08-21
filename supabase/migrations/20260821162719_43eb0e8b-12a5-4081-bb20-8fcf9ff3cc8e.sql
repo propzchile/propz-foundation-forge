@@ -1,0 +1,12 @@
+revoke all on function public.tg_set_updated_at() from public, anon, authenticated;
+revoke all on function public.tg_owner_link_creator() from public, anon, authenticated;
+revoke all on function public.tg_contract_validate() from public, anon, authenticated;
+revoke all on function public.owner_of_property(uuid) from public, anon, authenticated;
+revoke all on function public.has_role(uuid, public.app_role) from public, anon;
+revoke all on function public.can_access_owner(uuid) from public, anon;
+revoke all on function public.can_access_property(uuid) from public, anon;
+revoke all on function public.set_primary_role(public.app_role) from public, anon;
+grant execute on function public.has_role(uuid, public.app_role) to authenticated;
+grant execute on function public.can_access_owner(uuid) to authenticated;
+grant execute on function public.can_access_property(uuid) to authenticated;
+grant execute on function public.set_primary_role(public.app_role) to authenticated;
