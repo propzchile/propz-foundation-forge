@@ -10,33 +10,135 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedPanelRouteImport } from './routes/_authenticated/panel'
+import { Route as AuthenticatedContratosContractIdRouteImport } from './routes/_authenticated/contratos.$contractId'
+import { Route as AuthenticatedPropiedadesPropertyIdRouteImport } from './routes/_authenticated/propiedades.$propertyId'
+import { Route as AuthenticatedPropietariosIndexRouteImport } from './routes/_authenticated/propietarios.index'
+import { Route as AuthenticatedPropietariosOwnerIdRouteImport } from './routes/_authenticated/propietarios.$ownerId'
+import { Route as AuthenticatedUnidadesUnitIdRouteImport } from './routes/_authenticated/unidades.$unitId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedPanelRoute = AuthenticatedPanelRouteImport.update({
+  id: '/panel',
+  path: '/panel',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedContratosContractIdRoute =
+  AuthenticatedContratosContractIdRouteImport.update({
+    id: '/contratos/$contractId',
+    path: '/contratos/$contractId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPropiedadesPropertyIdRoute =
+  AuthenticatedPropiedadesPropertyIdRouteImport.update({
+    id: '/propiedades/$propertyId',
+    path: '/propiedades/$propertyId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPropietariosIndexRoute =
+  AuthenticatedPropietariosIndexRouteImport.update({
+    id: '/propietarios/',
+    path: '/propietarios/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPropietariosOwnerIdRoute =
+  AuthenticatedPropietariosOwnerIdRouteImport.update({
+    id: '/propietarios/$ownerId',
+    path: '/propietarios/$ownerId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedUnidadesUnitIdRoute =
+  AuthenticatedUnidadesUnitIdRouteImport.update({
+    id: '/unidades/$unitId',
+    path: '/unidades/$unitId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/panel': typeof AuthenticatedPanelRoute
+  '/contratos/$contractId': typeof AuthenticatedContratosContractIdRoute
+  '/propiedades/$propertyId': typeof AuthenticatedPropiedadesPropertyIdRoute
+  '/propietarios/$ownerId': typeof AuthenticatedPropietariosOwnerIdRoute
+  '/unidades/$unitId': typeof AuthenticatedUnidadesUnitIdRoute
+  '/propietarios/': typeof AuthenticatedPropietariosIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/panel': typeof AuthenticatedPanelRoute
+  '/contratos/$contractId': typeof AuthenticatedContratosContractIdRoute
+  '/propiedades/$propertyId': typeof AuthenticatedPropiedadesPropertyIdRoute
+  '/propietarios/$ownerId': typeof AuthenticatedPropietariosOwnerIdRoute
+  '/unidades/$unitId': typeof AuthenticatedUnidadesUnitIdRoute
+  '/propietarios': typeof AuthenticatedPropietariosIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/_authenticated/panel': typeof AuthenticatedPanelRoute
+  '/_authenticated/contratos/$contractId': typeof AuthenticatedContratosContractIdRoute
+  '/_authenticated/propiedades/$propertyId': typeof AuthenticatedPropiedadesPropertyIdRoute
+  '/_authenticated/propietarios/$ownerId': typeof AuthenticatedPropietariosOwnerIdRoute
+  '/_authenticated/unidades/$unitId': typeof AuthenticatedUnidadesUnitIdRoute
+  '/_authenticated/propietarios/': typeof AuthenticatedPropietariosIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/panel'
+    | '/contratos/$contractId'
+    | '/propiedades/$propertyId'
+    | '/propietarios/$ownerId'
+    | '/unidades/$unitId'
+    | '/propietarios/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/auth'
+    | '/panel'
+    | '/contratos/$contractId'
+    | '/propiedades/$propertyId'
+    | '/propietarios/$ownerId'
+    | '/unidades/$unitId'
+    | '/propietarios'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/_authenticated/panel'
+    | '/_authenticated/contratos/$contractId'
+    | '/_authenticated/propiedades/$propertyId'
+    | '/_authenticated/propietarios/$ownerId'
+    | '/_authenticated/unidades/$unitId'
+    | '/_authenticated/propietarios/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +150,91 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/panel': {
+      id: '/_authenticated/panel'
+      path: '/panel'
+      fullPath: '/panel'
+      preLoaderRoute: typeof AuthenticatedPanelRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/contratos/$contractId': {
+      id: '/_authenticated/contratos/$contractId'
+      path: '/contratos/$contractId'
+      fullPath: '/contratos/$contractId'
+      preLoaderRoute: typeof AuthenticatedContratosContractIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/propiedades/$propertyId': {
+      id: '/_authenticated/propiedades/$propertyId'
+      path: '/propiedades/$propertyId'
+      fullPath: '/propiedades/$propertyId'
+      preLoaderRoute: typeof AuthenticatedPropiedadesPropertyIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/propietarios/': {
+      id: '/_authenticated/propietarios/'
+      path: '/propietarios'
+      fullPath: '/propietarios/'
+      preLoaderRoute: typeof AuthenticatedPropietariosIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/propietarios/$ownerId': {
+      id: '/_authenticated/propietarios/$ownerId'
+      path: '/propietarios/$ownerId'
+      fullPath: '/propietarios/$ownerId'
+      preLoaderRoute: typeof AuthenticatedPropietariosOwnerIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/unidades/$unitId': {
+      id: '/_authenticated/unidades/$unitId'
+      path: '/unidades/$unitId'
+      fullPath: '/unidades/$unitId'
+      preLoaderRoute: typeof AuthenticatedUnidadesUnitIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedPanelRoute: typeof AuthenticatedPanelRoute
+  AuthenticatedContratosContractIdRoute: typeof AuthenticatedContratosContractIdRoute
+  AuthenticatedPropiedadesPropertyIdRoute: typeof AuthenticatedPropiedadesPropertyIdRoute
+  AuthenticatedPropietariosOwnerIdRoute: typeof AuthenticatedPropietariosOwnerIdRoute
+  AuthenticatedUnidadesUnitIdRoute: typeof AuthenticatedUnidadesUnitIdRoute
+  AuthenticatedPropietariosIndexRoute: typeof AuthenticatedPropietariosIndexRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedPanelRoute: AuthenticatedPanelRoute,
+  AuthenticatedContratosContractIdRoute: AuthenticatedContratosContractIdRoute,
+  AuthenticatedPropiedadesPropertyIdRoute:
+    AuthenticatedPropiedadesPropertyIdRoute,
+  AuthenticatedPropietariosOwnerIdRoute: AuthenticatedPropietariosOwnerIdRoute,
+  AuthenticatedUnidadesUnitIdRoute: AuthenticatedUnidadesUnitIdRoute,
+  AuthenticatedPropietariosIndexRoute: AuthenticatedPropietariosIndexRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
