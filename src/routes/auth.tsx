@@ -39,12 +39,56 @@ function AuthPage() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
+  const [mode, setMode] = useState<"auth" | "forgot" | "reset">("auth");
 
   useEffect(() => {
+    const isRecovery =
+      typeof window !== "undefined" &&
+      (window.location.hash.includes("type=recovery") ||
+        new URLSearchParams(window.location.search).get("type") === "recovery");
+
+    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") setMode("reset");
+    });
+
     supabase.auth.getSession().then(({ data }) => {
+      if (isRecovery) {
+        setMode("reset");
+        return;
+      }
       if (data.session) navigate({ to: "/panel", replace: true });
     });
+
+    return () => sub.subscription.unsubscribe();
   }, [navigate]);
+
+  async function handleForgot(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth?type=recovery`,
+    });
+    setLoading(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Te enviamos un enlace para restablecer tu contraseña.");
+    setMode("auth");
+  }
+
+  async function handleReset(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    const { error } = await supabase.auth.updateUser({ password });
+    setLoading(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Contraseña actualizada");
+    navigate({ to: "/panel", replace: true });
+  }
 
   async function ensureProfile() {
     const { data } = await supabase.auth.getUser();

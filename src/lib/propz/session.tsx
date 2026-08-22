@@ -37,10 +37,31 @@ export function useAppContext() {
     queryKey: ["app-context", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const [{ data: profile }, { data: roles }] = await Promise.all([
+      const [{ data: existing }, { data: roles }] = await Promise.all([
         supabase.from("profiles").select("*").eq("id", user!.id).maybeSingle(),
         supabase.from("user_roles").select("role").eq("user_id", user!.id),
       ]);
+
+      // Garantiza un perfil por usuario (id = auth.uid(); sin duplicados por PK).
+      let profile = existing;
+      if (!profile) {
+        const meta = user!.user_metadata ?? {};
+        const { data: created } = await supabase
+          .from("profiles")
+          .upsert(
+            {
+              id: user!.id,
+              email: user!.email ?? "",
+              first_name: (meta["first_name"] as string) ?? "",
+              last_name: (meta["last_name"] as string) ?? "",
+              phone: (meta["phone"] as string) ?? null,
+            },
+            { onConflict: "id" },
+          )
+          .select("*")
+          .maybeSingle();
+        profile = created ?? null;
+      }
 
       const roleList = (roles ?? []).map((r) => r.role as AppRole);
       const role: AppRole | null =
