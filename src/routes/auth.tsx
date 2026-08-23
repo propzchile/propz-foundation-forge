@@ -254,7 +254,15 @@ function AuthPage() {
                 <Button type="submit" className="w-full" disabled={loading}>
                   Entrar
                 </Button>
+                <button
+                  type="button"
+                  onClick={() => setMode("forgot")}
+                  className="w-full text-center text-xs text-muted-foreground hover:text-foreground"
+                >
+                  ¿Olvidaste tu contraseña?
+                </button>
               </form>
+
             </TabsContent>
 
             <TabsContent value="signup">
