@@ -168,11 +168,66 @@ function AuthPage() {
           <div className="mb-8 lg:hidden">
             <PropzLogo />
           </div>
+          {mode === "reset" ? (
+            <form onSubmit={handleReset} className="space-y-4">
+              <div>
+                <h1 className="font-display text-2xl font-semibold">Nueva contraseña</h1>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Define tu nueva contraseña para volver a entrar.
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="newPassword">Nueva contraseña</Label>
+                <Input
+                  id="newPassword"
+                  type="password"
+                  required
+                  minLength={6}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={loading}>
+                Actualizar contraseña
+              </Button>
+            </form>
+          ) : mode === "forgot" ? (
+            <form onSubmit={handleForgot} className="space-y-4">
+              <div>
+                <h1 className="font-display text-2xl font-semibold">Recuperar contraseña</h1>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Te enviaremos un enlace para crear una nueva contraseña.
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="emailForgot">Email</Label>
+                <Input
+                  id="emailForgot"
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={loading}>
+                Enviar enlace
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full"
+                onClick={() => setMode("auth")}
+              >
+                Volver
+              </Button>
+            </form>
+          ) : (
           <Tabs defaultValue="signin">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="signin">Iniciar sesión</TabsTrigger>
               <TabsTrigger value="signup">Crear cuenta</TabsTrigger>
             </TabsList>
+
 
             <TabsContent value="signin">
               <form onSubmit={handleSignIn} className="mt-6 space-y-4">
