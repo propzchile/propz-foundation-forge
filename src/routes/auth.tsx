@@ -222,104 +222,101 @@ function AuthPage() {
               </Button>
             </form>
           ) : (
-          <Tabs defaultValue="signin">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="signin">Iniciar sesión</TabsTrigger>
-              <TabsTrigger value="signup">Crear cuenta</TabsTrigger>
-            </TabsList>
+            <Tabs defaultValue="signin">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="signin">Iniciar sesión</TabsTrigger>
+                <TabsTrigger value="signup">Crear cuenta</TabsTrigger>
+              </TabsList>
 
-
-            <TabsContent value="signin">
-              <form onSubmit={handleSignIn} className="mt-6 space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password">Contraseña</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  Entrar
-                </Button>
-                <button
-                  type="button"
-                  onClick={() => setMode("forgot")}
-                  className="w-full text-center text-xs text-muted-foreground hover:text-foreground"
-                >
-                  ¿Olvidaste tu contraseña?
-                </button>
-              </form>
-
-            </TabsContent>
-
-            <TabsContent value="signup">
-              <form onSubmit={handleSignUp} className="mt-6 space-y-4">
-                <div className="grid grid-cols-2 gap-3">
+              <TabsContent value="signin">
+                <form onSubmit={handleSignIn} className="mt-6 space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="first">Nombre</Label>
+                    <Label htmlFor="email">Email</Label>
                     <Input
-                      id="first"
+                      id="email"
+                      type="email"
                       required
-                      value={firstName}
-                      onChange={(e) => setFirstName(e.target.value)}
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="last">Apellido</Label>
+                    <Label htmlFor="password">Contraseña</Label>
                     <Input
-                      id="last"
+                      id="password"
+                      type="password"
                       required
-                      value={lastName}
-                      onChange={(e) => setLastName(e.target.value)}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
                     />
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Teléfono</Label>
-                  <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email2">Email</Label>
-                  <Input
-                    id="email2"
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password2">Contraseña</Label>
-                  <Input
-                    id="password2"
-                    type="password"
-                    required
-                    minLength={6}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  Crear cuenta
-                </Button>
-              </form>
-            </TabsContent>
-          </Tabs>
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    Entrar
+                  </Button>
+                  <button
+                    type="button"
+                    onClick={() => setMode("forgot")}
+                    className="w-full text-center text-xs text-muted-foreground hover:text-foreground"
+                  >
+                    ¿Olvidaste tu contraseña?
+                  </button>
+                </form>
+              </TabsContent>
+
+              <TabsContent value="signup">
+                <form onSubmit={handleSignUp} className="mt-6 space-y-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="first">Nombre</Label>
+                      <Input
+                        id="first"
+                        required
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="last">Apellido</Label>
+                      <Input
+                        id="last"
+                        required
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Teléfono</Label>
+                    <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email2">Email</Label>
+                    <Input
+                      id="email2"
+                      type="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="password2">Contraseña</Label>
+                    <Input
+                      id="password2"
+                      type="password"
+                      required
+                      minLength={6}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                    />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    Crear cuenta
+                  </Button>
+                </form>
+              </TabsContent>
+            </Tabs>
           )}
-
 
           <p className="mt-6 text-center text-xs text-muted-foreground">
             <Link to="/" className="hover:text-foreground">
