@@ -2,28 +2,18 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { AppShell, EmptyState } from "@/components/propz/app-shell";
+import { AppShell, EmptyState, StatusBadge } from "@/components/propz/app-shell";
+import { OwnerForm } from "@/components/propz/owner-form";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useCreateOwner, useOwners } from "@/lib/propz/queries";
 import { useAppContext } from "@/lib/propz/session";
-import type { PartyType } from "@/lib/propz/domain";
 
 export const Route = createFileRoute("/_authenticated/propietarios/")({
   head: () => ({
