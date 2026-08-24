@@ -157,7 +157,6 @@ function OwnerActions({ owner }: { owner: Owner }) {
   );
 }
 
-
 export const Route = createFileRoute("/_authenticated/propietarios/$ownerId")({
   head: () => ({
     meta: [
@@ -258,7 +257,10 @@ function OwnerDetail() {
             <NewTenantDialog ownerId={ownerId} />
           </div>
           {(tenants.data?.length ?? 0) === 0 ? (
-            <EmptyState title="Sin arrendatarios" hint="Los arrendatarios pertenecen al propietario y pueden reutilizarse en varios contratos." />
+            <EmptyState
+              title="Sin arrendatarios"
+              hint="Los arrendatarios pertenecen al propietario y pueden reutilizarse en varios contratos."
+            />
           ) : (
             <div className="grid gap-3 md:grid-cols-2">
               {tenants.data!.map((t) => (

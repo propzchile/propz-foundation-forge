@@ -44,9 +44,7 @@ const EMPTY = {
 export function OwnerForm({ mode, initialValues, pending, onSubmit }: OwnerFormProps) {
   const [form, setForm] = useState({
     ...EMPTY,
-    ...Object.fromEntries(
-      Object.entries(initialValues ?? {}).map(([k, v]) => [k, v ?? ""]),
-    ),
+    ...Object.fromEntries(Object.entries(initialValues ?? {}).map(([k, v]) => [k, v ?? ""])),
   } as typeof EMPTY);
 
   const isCompany = form.party_type === "empresa";
@@ -113,10 +111,7 @@ export function OwnerForm({ mode, initialValues, pending, onSubmit }: OwnerFormP
         </div>
         <div className="space-y-2">
           <Label>Teléfono</Label>
-          <Input
-            value={form.phone}
-            onChange={(e) => setForm({ ...form, phone: e.target.value })}
-          />
+          <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
         </div>
       </div>
 
@@ -140,11 +135,7 @@ export function OwnerForm({ mode, initialValues, pending, onSubmit }: OwnerFormP
 
       <DialogFooter>
         <Button type="submit" disabled={pending}>
-          {pending
-            ? "Guardando…"
-            : mode === "create"
-              ? "Crear"
-              : "Guardar cambios"}
+          {pending ? "Guardando…" : mode === "create" ? "Crear" : "Guardar cambios"}
         </Button>
       </DialogFooter>
     </form>

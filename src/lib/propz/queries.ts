@@ -1,14 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { supabase } from "@/integrations/supabase/client";
-import type {
-  AppRole,
-  Contract,
-  Owner,
-  Property,
-  Tenant,
-  Unit,
-} from "./domain";
+import type { AppRole, Contract, Owner, Property, Tenant, Unit } from "./domain";
 
 /* ---------------------------------- OWNERS --------------------------------- */
 
@@ -126,7 +119,6 @@ export function useSetOwnerArchived() {
     },
   });
 }
-
 
 /* -------------------------------- PROPERTIES ------------------------------- */
 
