@@ -81,7 +81,21 @@ function OwnerDetail() {
         { label: "Propietarios", to: "/propietarios" },
         { label: owner.data?.display_name ?? "…" },
       ]}
+      actions={owner.data ? <OwnerActions owner={owner.data} /> : null}
     >
+      {owner.data && (
+        <div className="surface-card mb-6 grid gap-3 p-4 sm:grid-cols-2">
+          <Field label="Estado" value={<StatusBadge status={owner.data.status} />} />
+          <Field label="RUT" value={owner.data.tax_id ?? "—"} />
+          {owner.data.party_type === "empresa" && (
+            <Field label="Razón social" value={owner.data.legal_name ?? "—"} />
+          )}
+          <Field label="Email" value={owner.data.email ?? "—"} />
+          <Field label="Teléfono" value={owner.data.phone ?? "—"} />
+          {owner.data.notes && <Field label="Notas" value={owner.data.notes} />}
+        </div>
+      )}
+
       <Tabs defaultValue="propiedades">
         <TabsList>
           <TabsTrigger value="propiedades">Propiedades</TabsTrigger>
