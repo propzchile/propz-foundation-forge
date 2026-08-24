@@ -92,7 +92,9 @@ function OwnersPage() {
                   </td>
                   <td className="px-4 py-3">{o.tax_id ?? "—"}</td>
                   <td className="px-4 py-3">{o.email ?? "—"}</td>
-                  <td className="px-4 py-3">{o.status}</td>
+                  <td className="px-4 py-3">
+                    <StatusBadge status={o.status} />
+                  </td>
                 </tr>
               ))}
             </tbody>
