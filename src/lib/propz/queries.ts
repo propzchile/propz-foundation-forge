@@ -1,14 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { supabase } from "@/integrations/supabase/client";
-import type {
-  AppRole,
-  Contract,
-  Owner,
-  Property,
-  Tenant,
-  Unit,
-} from "./domain";
+import type { AppRole, Contract, Owner, Property, Tenant, Unit } from "./domain";
 
 /* ---------------------------------- OWNERS --------------------------------- */
 
@@ -67,6 +60,62 @@ export function useCreateOwner() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["owners"] });
+    },
+  });
+}
+
+export function useUpdateOwner() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      id: string;
+      display_name: string;
+      party_type: Owner["party_type"];
+      legal_name?: string | null;
+      tax_id?: string | null;
+      email?: string | null;
+      phone?: string | null;
+      notes?: string | null;
+    }) => {
+      const { id, ...fields } = input;
+      const { data, error } = await supabase
+        .from("owners")
+        .update(fields)
+        .eq("id", id)
+        .select()
+        .maybeSingle();
+      if (error) throw error;
+      if (!data) throw new Error("No tienes permiso para editar este propietario.");
+      return data;
+    },
+    onSuccess: (row) => {
+      qc.invalidateQueries({ queryKey: ["owners"] });
+      qc.invalidateQueries({ queryKey: ["owner", row.id] });
+    },
+  });
+}
+
+export function useSetOwnerArchived() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { id: string; archived: boolean }) => {
+      const { data, error } = await supabase
+        .from("owners")
+        .update(
+          input.archived
+            ? { status: "archivado" as const, archived_at: new Date().toISOString() }
+            : { status: "activo" as const, archived_at: null },
+        )
+        .eq("id", input.id)
+        .select()
+        .maybeSingle();
+      if (error) throw error;
+      if (!data) throw new Error("No tienes permiso para cambiar el estado de este propietario.");
+      return data;
+    },
+    onSuccess: (row) => {
+      qc.invalidateQueries({ queryKey: ["owners"] });
+      qc.invalidateQueries({ queryKey: ["owner", row.id] });
     },
   });
 }

@@ -23,12 +23,26 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { OwnerForm } from "@/components/propz/owner-form";
+import {
   useContracts,
   useCreateProperty,
   useCreateTenant,
   useOwner,
   useProperties,
+  useSetOwnerArchived,
   useTenants,
+  useUpdateOwner,
 } from "@/lib/propz/queries";
 import {
   PROPERTY_TYPES,
@@ -36,9 +50,112 @@ import {
   formatMoney,
   tenantName,
   titleCase,
+  type Owner,
   type PartyType,
   type PropertyType,
 } from "@/lib/propz/domain";
+
+function Field({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div>
+      <p className="text-xs uppercase text-muted-foreground">{label}</p>
+      <div className="mt-1 text-sm">{value}</div>
+    </div>
+  );
+}
+
+function OwnerActions({ owner }: { owner: Owner }) {
+  const [editOpen, setEditOpen] = useState(false);
+  const update = useUpdateOwner();
+  const setArchived = useSetOwnerArchived();
+  const isArchived = owner.status === "archivado";
+
+  return (
+    <div className="flex flex-wrap gap-2">
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogTrigger asChild>
+          <Button variant="outline">Editar</Button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar propietario</DialogTitle>
+          </DialogHeader>
+          <OwnerForm
+            mode="edit"
+            pending={update.isPending}
+            initialValues={{
+              display_name: owner.display_name,
+              party_type: owner.party_type,
+              legal_name: owner.legal_name,
+              tax_id: owner.tax_id,
+              email: owner.email,
+              phone: owner.phone,
+              notes: owner.notes,
+            }}
+            onSubmit={async (values) => {
+              try {
+                await update.mutateAsync({ id: owner.id, ...values });
+                toast.success("Cambios guardados");
+                setEditOpen(false);
+              } catch (err) {
+                toast.error((err as Error).message);
+              }
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {isArchived ? (
+        <Button
+          variant="secondary"
+          disabled={setArchived.isPending}
+          onClick={async () => {
+            try {
+              await setArchived.mutateAsync({ id: owner.id, archived: false });
+              toast.success("Propietario reactivado");
+            } catch (err) {
+              toast.error((err as Error).message);
+            }
+          }}
+        >
+          {setArchived.isPending ? "Reactivando…" : "Reactivar"}
+        </Button>
+      ) : (
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="outline" disabled={setArchived.isPending}>
+              Archivar
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>¿Archivar a {owner.display_name}?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Dejará de aparecer entre los propietarios activos. No se borra nada y puedes
+                reactivarlo cuando quieras.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={async () => {
+                  try {
+                    await setArchived.mutateAsync({ id: owner.id, archived: true });
+                    toast.success("Propietario archivado");
+                  } catch (err) {
+                    toast.error((err as Error).message);
+                  }
+                }}
+              >
+                Archivar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
+    </div>
+  );
+}
 
 export const Route = createFileRoute("/_authenticated/propietarios/$ownerId")({
   head: () => ({
@@ -81,7 +198,21 @@ function OwnerDetail() {
         { label: "Propietarios", to: "/propietarios" },
         { label: owner.data?.display_name ?? "…" },
       ]}
+      actions={owner.data ? <OwnerActions owner={owner.data} /> : null}
     >
+      {owner.data && (
+        <div className="surface-card mb-6 grid gap-3 p-4 sm:grid-cols-2">
+          <Field label="Estado" value={<StatusBadge status={owner.data.status} />} />
+          <Field label="RUT" value={owner.data.tax_id ?? "—"} />
+          {owner.data.party_type === "empresa" && (
+            <Field label="Razón social" value={owner.data.legal_name ?? "—"} />
+          )}
+          <Field label="Email" value={owner.data.email ?? "—"} />
+          <Field label="Teléfono" value={owner.data.phone ?? "—"} />
+          {owner.data.notes && <Field label="Notas" value={owner.data.notes} />}
+        </div>
+      )}
+
       <Tabs defaultValue="propiedades">
         <TabsList>
           <TabsTrigger value="propiedades">Propiedades</TabsTrigger>
@@ -126,7 +257,10 @@ function OwnerDetail() {
             <NewTenantDialog ownerId={ownerId} />
           </div>
           {(tenants.data?.length ?? 0) === 0 ? (
-            <EmptyState title="Sin arrendatarios" hint="Los arrendatarios pertenecen al propietario y pueden reutilizarse en varios contratos." />
+            <EmptyState
+              title="Sin arrendatarios"
+              hint="Los arrendatarios pertenecen al propietario y pueden reutilizarse en varios contratos."
+            />
           ) : (
             <div className="grid gap-3 md:grid-cols-2">
               {tenants.data!.map((t) => (
