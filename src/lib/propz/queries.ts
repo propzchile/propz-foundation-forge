@@ -34,6 +34,25 @@ export function useOwner(ownerId: string) {
   });
 }
 
+/** Ficha de propietario del propio usuario (nunca un fallback a otra ficha). */
+export function useMyOwner(userId: string | null) {
+  return useQuery({
+    queryKey: ["my-owner", userId],
+    enabled: !!userId,
+    queryFn: async (): Promise<Owner | null> => {
+      const { data, error } = await supabase
+        .from("owners")
+        .select("*")
+        .eq("user_id", userId!)
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
 export function useCreateOwner() {
   const qc = useQueryClient();
   return useMutation({

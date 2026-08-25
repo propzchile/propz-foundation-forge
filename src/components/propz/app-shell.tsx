@@ -123,6 +123,42 @@ export function EmptyState({ title, hint }: { title: string; hint?: string }) {
   );
 }
 
+export function LoadingState({ label = "Cargando…" }: { label?: string }) {
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      className="rounded-lg border border-dashed p-10 text-center text-sm text-muted-foreground"
+    >
+      {label}
+    </div>
+  );
+}
+
+export function ErrorState({
+  title = "No pudimos cargar la información",
+  hint = "Revisa tu conexión e inténtalo nuevamente.",
+  onRetry,
+  retrying,
+}: {
+  title?: string;
+  hint?: string;
+  onRetry?: () => void;
+  retrying?: boolean;
+}) {
+  return (
+    <div role="alert" className="rounded-lg border border-destructive/40 bg-destructive/5 p-10 text-center">
+      <p className="font-medium">{title}</p>
+      <p className="mt-1 text-sm text-muted-foreground">{hint}</p>
+      {onRetry && (
+        <Button variant="outline" className="mt-4" onClick={onRetry} disabled={retrying}>
+          {retrying ? "Reintentando…" : "Reintentar"}
+        </Button>
+      )}
+    </div>
+  );
+}
+
 export function StatusBadge({ status }: { status: string }) {
   const tone =
     status === "ACTIVO" || status === "activo"
