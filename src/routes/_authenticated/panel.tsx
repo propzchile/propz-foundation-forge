@@ -3,7 +3,13 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Building2, Users, FileText, Home } from "lucide-react";
 
-import { AppShell, EmptyState, PropzLogo } from "@/components/propz/app-shell";
+import {
+  AppShell,
+  EmptyState,
+  ErrorState,
+  LoadingState,
+  PropzLogo,
+} from "@/components/propz/app-shell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAppContext } from "@/lib/propz/session";
@@ -12,6 +18,7 @@ import {
   useCreateOwner,
   useOwners,
   useProperties,
+  useMyOwner,
   useSeedDemoData,
   useSetPrimaryRole,
   useTenants,
@@ -219,13 +226,12 @@ function AdminPanel() {
 }
 
 function OwnerPanel() {
-  const owners = useOwners();
   const createOwner = useCreateOwner();
   const ctx = useAppContext();
   const properties = useProperties();
   const contracts = useContracts({});
-
-  const myOwner = owners.data?.find((o) => o.user_id === ctx.userId) ?? owners.data?.[0];
+  const myOwnerQuery = useMyOwner(ctx.userId);
+  const myOwner = myOwnerQuery.data ?? null;
 
   return (
     <AppShell
@@ -245,7 +251,16 @@ function OwnerPanel() {
       </div>
 
       <div className="mt-10">
-        {!myOwner ? (
+        {myOwnerQuery.isLoading ? (
+          <LoadingState label="Cargando tu cartera…" />
+        ) : myOwnerQuery.isError ? (
+          <ErrorState
+            title="No pudimos cargar tu cartera"
+            hint="Puede ser un problema momentáneo de conexión. Vuelve a intentarlo."
+            onRetry={() => myOwnerQuery.refetch()}
+            retrying={myOwnerQuery.isFetching}
+          />
+        ) : !myOwner ? (
           <div className="surface-card p-6">
             <h2 className="text-lg font-semibold">Crea tu ficha de propietario</h2>
             <p className="mt-1 text-sm text-muted-foreground">
