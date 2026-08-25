@@ -80,7 +80,11 @@ export function AppShell({
               <PropzLogo />
             </Link>
             <Badge variant="secondary" className="uppercase tracking-wide">
-              {role === "administrador" ? "Administración" : role === "propietario" ? "Cartera propia" : "Sin rol"}
+              {role === "administrador"
+                ? "Administración"
+                : role === "propietario"
+                  ? "Cartera propia"
+                  : "Sin rol"}
             </Badge>
           </div>
           <div className="flex items-center gap-3">
@@ -147,7 +151,10 @@ export function ErrorState({
   retrying?: boolean;
 }) {
   return (
-    <div role="alert" className="rounded-lg border border-destructive/40 bg-destructive/5 p-10 text-center">
+    <div
+      role="alert"
+      className="rounded-lg border border-destructive/40 bg-destructive/5 p-10 text-center"
+    >
       <p className="font-medium">{title}</p>
       <p className="mt-1 text-sm text-muted-foreground">{hint}</p>
       {onRetry && (
