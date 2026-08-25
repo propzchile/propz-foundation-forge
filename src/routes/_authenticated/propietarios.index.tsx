@@ -2,9 +2,23 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { AppShell, EmptyState, StatusBadge } from "@/components/propz/app-shell";
+import {
+  AppShell,
+  EmptyState,
+  ErrorState,
+  LoadingState,
+  StatusBadge,
+} from "@/components/propz/app-shell";
 import { OwnerForm } from "@/components/propz/owner-form";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -36,9 +50,28 @@ export const Route = createFileRoute("/_authenticated/propietarios/")({
   component: OwnersPage,
 });
 
+type StatusFilter = "activos" | "archivados" | "todos";
+
 function OwnersPage() {
   const owners = useOwners();
   const ctx = useAppContext();
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("activos");
+
+  const term = search.trim().toLowerCase();
+  const filtered = (owners.data ?? []).filter((o) => {
+    const matchesStatus =
+      statusFilter === "todos"
+        ? true
+        : statusFilter === "archivados"
+          ? o.status === "archivado"
+          : o.status !== "archivado";
+    if (!matchesStatus) return false;
+    if (!term) return true;
+    return [o.display_name, o.legal_name, o.tax_id, o.email]
+      .filter(Boolean)
+      .some((v) => String(v).toLowerCase().includes(term));
+  });
 
   return (
     <AppShell
@@ -54,10 +87,42 @@ function OwnersPage() {
       ]}
       actions={<NewOwnerDialog />}
     >
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <Input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Buscar por nombre, razón social o RUT"
+          aria-label="Buscar propietarios"
+          className="max-w-sm"
+        />
+        <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
+          <SelectTrigger className="w-44" aria-label="Filtrar por estado">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="activos">Activos</SelectItem>
+            <SelectItem value="archivados">Archivados</SelectItem>
+            <SelectItem value="todos">Todos</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
       {owners.isLoading ? (
-        <p className="text-sm text-muted-foreground">Cargando…</p>
+        <LoadingState label="Cargando propietarios…" />
+      ) : owners.isError ? (
+        <ErrorState
+          title="No pudimos cargar los propietarios"
+          hint="Puede ser un problema momentáneo de conexión. Vuelve a intentarlo."
+          onRetry={() => owners.refetch()}
+          retrying={owners.isFetching}
+        />
       ) : (owners.data?.length ?? 0) === 0 ? (
         <EmptyState title="Sin propietarios" hint="Crea el primero para comenzar." />
+      ) : filtered.length === 0 ? (
+        <EmptyState
+          title="Sin resultados"
+          hint="Prueba con otro nombre o RUT, o cambia el filtro de estado."
+        />
       ) : (
         <div className="overflow-hidden rounded-lg border">
           <table className="w-full text-sm">
@@ -71,7 +136,7 @@ function OwnersPage() {
               </tr>
             </thead>
             <tbody>
-              {owners.data!.map((o) => (
+              {filtered.map((o) => (
                 <tr key={o.id} className="border-t hover:bg-muted/40">
                   <td className="px-4 py-3">
                     <Link

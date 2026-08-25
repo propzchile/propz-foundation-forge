@@ -22,7 +22,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useCreateUnit, useOwner, useProperty, useUnits } from "@/lib/propz/queries";
-import { RENTAL_MODES, UNIT_TYPES, titleCase, type UnitRentalMode, type UnitType } from "@/lib/propz/domain";
+import {
+  RENTAL_MODES,
+  UNIT_TYPES,
+  titleCase,
+  type UnitRentalMode,
+  type UnitType,
+} from "@/lib/propz/domain";
 
 export const Route = createFileRoute("/_authenticated/propiedades/$propertyId")({
   head: () => ({

@@ -80,7 +80,11 @@ export function AppShell({
               <PropzLogo />
             </Link>
             <Badge variant="secondary" className="uppercase tracking-wide">
-              {role === "administrador" ? "Administración" : role === "propietario" ? "Cartera propia" : "Sin rol"}
+              {role === "administrador"
+                ? "Administración"
+                : role === "propietario"
+                  ? "Cartera propia"
+                  : "Sin rol"}
             </Badge>
           </div>
           <div className="flex items-center gap-3">
@@ -119,6 +123,45 @@ export function EmptyState({ title, hint }: { title: string; hint?: string }) {
     <div className="rounded-lg border border-dashed p-10 text-center">
       <p className="font-medium">{title}</p>
       {hint && <p className="mt-1 text-sm text-muted-foreground">{hint}</p>}
+    </div>
+  );
+}
+
+export function LoadingState({ label = "Cargando…" }: { label?: string }) {
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      className="rounded-lg border border-dashed p-10 text-center text-sm text-muted-foreground"
+    >
+      {label}
+    </div>
+  );
+}
+
+export function ErrorState({
+  title = "No pudimos cargar la información",
+  hint = "Revisa tu conexión e inténtalo nuevamente.",
+  onRetry,
+  retrying,
+}: {
+  title?: string;
+  hint?: string;
+  onRetry?: () => void;
+  retrying?: boolean;
+}) {
+  return (
+    <div
+      role="alert"
+      className="rounded-lg border border-destructive/40 bg-destructive/5 p-10 text-center"
+    >
+      <p className="font-medium">{title}</p>
+      <p className="mt-1 text-sm text-muted-foreground">{hint}</p>
+      {onRetry && (
+        <Button variant="outline" className="mt-4" onClick={onRetry} disabled={retrying}>
+          {retrying ? "Reintentando…" : "Reintentar"}
+        </Button>
+      )}
     </div>
   );
 }

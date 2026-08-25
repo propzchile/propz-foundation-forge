@@ -2,7 +2,13 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { AppShell, EmptyState, StatusBadge } from "@/components/propz/app-shell";
+import {
+  AppShell,
+  EmptyState,
+  ErrorState,
+  LoadingState,
+  StatusBadge,
+} from "@/components/propz/app-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -184,6 +190,35 @@ function OwnerDetail() {
   const properties = useProperties(ownerId);
   const tenants = useTenants(ownerId);
   const contracts = useContracts({ ownerId });
+
+  if (owner.isLoading || owner.isError || !owner.data) {
+    return (
+      <AppShell
+        title="Propietario"
+        crumbs={[
+          { label: "Inicio", to: "/panel" },
+          { label: "Propietarios", to: "/propietarios" },
+          { label: "…" },
+        ]}
+      >
+        {owner.isLoading ? (
+          <LoadingState label="Cargando propietario…" />
+        ) : owner.isError ? (
+          <ErrorState
+            title="No pudimos cargar este propietario"
+            hint="Puede ser un problema momentáneo de conexión. Vuelve a intentarlo."
+            onRetry={() => owner.refetch()}
+            retrying={owner.isFetching}
+          />
+        ) : (
+          <EmptyState
+            title="No encontramos este propietario"
+            hint="Puede que ya no exista o que no forme parte de tu cartera. Vuelve al listado de propietarios."
+          />
+        )}
+      </AppShell>
+    );
+  }
 
   return (
     <AppShell
