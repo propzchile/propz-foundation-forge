@@ -79,6 +79,7 @@ export function useCreateOwner() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["owners"] });
+      qc.invalidateQueries({ queryKey: ["my-owner"] });
     },
   });
 }
@@ -110,6 +111,7 @@ export function useUpdateOwner() {
     onSuccess: (row) => {
       qc.invalidateQueries({ queryKey: ["owners"] });
       qc.invalidateQueries({ queryKey: ["owner", row.id] });
+      qc.invalidateQueries({ queryKey: ["my-owner"] });
     },
   });
 }
@@ -135,6 +137,7 @@ export function useSetOwnerArchived() {
     onSuccess: (row) => {
       qc.invalidateQueries({ queryKey: ["owners"] });
       qc.invalidateQueries({ queryKey: ["owner", row.id] });
+      qc.invalidateQueries({ queryKey: ["my-owner"] });
     },
   });
 }
