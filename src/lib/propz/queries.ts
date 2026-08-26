@@ -294,6 +294,7 @@ export function useCreateUnit() {
       unit_type: Unit["unit_type"];
       alias?: string | null;
       rental_mode: Unit["rental_mode"];
+      parent_unit_id?: string | null;
     }) => {
       const { data, error } = await supabase.from("units").insert(input).select().single();
       if (error) throw error;
@@ -303,6 +304,61 @@ export function useCreateUnit() {
       qc.invalidateQueries({ queryKey: ["units", row.property_id] });
     },
   });
+}
+
+export function useUpdateUnit() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      id: string;
+      identifier: string;
+      unit_type: Unit["unit_type"];
+      alias?: string | null;
+      rental_mode: Unit["rental_mode"];
+      parent_unit_id?: string | null;
+    }) => {
+      const { id, ...fields } = input;
+      const { data, error } = await supabase
+        .from("units")
+        .update(fields)
+        .eq("id", id)
+        .select()
+        .maybeSingle();
+      if (error) throw error;
+      if (!data) throw new Error("No tienes permiso para editar esta unidad.");
+      return data;
+    },
+    onSuccess: (row) => {
+      qc.invalidateQueries({ queryKey: ["units", row.property_id] });
+      qc.invalidateQueries({ queryKey: ["unit", row.id] });
+    },
+  });
+}
+
+export function useSetUnitArchived() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { id: string; archived: boolean }) => {
+      const { data, error } = await supabase
+        .from("units")
+        .update(
+          input.archived
+            ? { status: "archivado" as const, archived_at: new Date().toISOString() }
+            : { status: "activo" as const, archived_at: null },
+        )
+        .eq("id", input.id)
+        .select()
+        .maybeSingle();
+      if (error) throw error;
+      if (!data) throw new Error("No tienes permiso para cambiar el estado de esta unidad.");
+      return data;
+    },
+    onSuccess: (row) => {
+      qc.invalidateQueries({ queryKey: ["units", row.property_id] });
+      qc.invalidateQueries({ queryKey: ["unit", row.id] });
+    },
+  });
+
 }
 
 /* ---------------------------------- TENANTS -------------------------------- */
