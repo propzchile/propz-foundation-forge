@@ -516,3 +516,197 @@ export function useSeedDemoData() {
     },
   });
 }
+
+/* ------------------------- UNIDADES / CARTERA GLOBAL ----------------------- */
+
+export type UnitWithProperty = Unit & {
+  properties: Pick<Property, "id" | "alias" | "owner_id" | "address" | "comuna"> | null;
+};
+
+/** Todas las unidades accesibles (RLS decide el alcance), con su propiedad. */
+export function useAllUnits() {
+  return useQuery({
+    queryKey: ["units", "all"],
+    queryFn: async (): Promise<UnitWithProperty[]> => {
+      const { data, error } = await supabase
+        .from("units")
+        .select("*, properties(id, alias, owner_id, address, comuna)")
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as unknown as UnitWithProperty[];
+    },
+  });
+}
+
+/* --------------------------- ARRENDATARIOS (EXTRA) ------------------------- */
+
+export function useUpdateTenant() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      id: string;
+      first_name: string;
+      last_name: string;
+      party_type: Tenant["party_type"];
+      tax_id?: string | null;
+      email?: string | null;
+      phone?: string | null;
+    }) => {
+      const { id, ...fields } = input;
+      const { data, error } = await supabase
+        .from("tenants")
+        .update(fields)
+        .eq("id", id)
+        .select()
+        .maybeSingle();
+      if (error) throw error;
+      if (!data) throw new Error("No tienes permiso para editar este arrendatario.");
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["tenants"] }),
+  });
+}
+
+export function useSetTenantArchived() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { id: string; archived: boolean }) => {
+      const { data, error } = await supabase
+        .from("tenants")
+        .update(
+          input.archived
+            ? { status: "archivado" as const, archived_at: new Date().toISOString() }
+            : { status: "activo" as const, archived_at: null },
+        )
+        .eq("id", input.id)
+        .select()
+        .maybeSingle();
+      if (error) throw error;
+      if (!data) throw new Error("No tienes permiso para cambiar el estado de este arrendatario.");
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["tenants"] }),
+  });
+}
+
+/* -------------------------- ELIMINACIÓN CONTROLADA ------------------------- */
+
+const RELATED_MESSAGE =
+  "Este registro tiene información asociada y no puede eliminarse directamente. Puedes archivarlo.";
+
+async function countRows(table: "properties" | "units" | "tenants" | "contracts", column: string, value: string) {
+  const { count, error } = await supabase
+    .from(table)
+    .select("id", { count: "exact", head: true })
+    .eq(column, value);
+  if (error) throw error;
+  return count ?? 0;
+}
+
+/** Dependencias que impiden eliminar un propietario. */
+export function useOwnerDependencies(ownerId: string) {
+  return useQuery({
+    queryKey: ["deps", "owner", ownerId],
+    enabled: !!ownerId,
+    queryFn: async () => {
+      const [properties, tenants, contracts] = await Promise.all([
+        countRows("properties", "owner_id", ownerId),
+        countRows("tenants", "owner_id", ownerId),
+        countRows("contracts", "owner_id", ownerId),
+      ]);
+      return { properties, tenants, contracts, total: properties + tenants + contracts };
+    },
+  });
+}
+
+export function usePropertyDependencies(propertyId: string) {
+  return useQuery({
+    queryKey: ["deps", "property", propertyId],
+    enabled: !!propertyId,
+    queryFn: async () => {
+      const [units, contracts] = await Promise.all([
+        countRows("units", "property_id", propertyId),
+        countRows("contracts", "property_id", propertyId),
+      ]);
+      return { units, contracts, total: units + contracts };
+    },
+  });
+}
+
+function invalidateAllPropz(qc: ReturnType<typeof useQueryClient>) {
+  for (const key of ["owners", "owner", "my-owner", "properties", "property", "units", "unit", "tenants", "contracts", "contract", "deps"]) {
+    qc.invalidateQueries({ queryKey: [key] });
+  }
+}
+
+export function useDeleteOwner() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const [properties, tenants, contracts] = await Promise.all([
+        countRows("properties", "owner_id", id),
+        countRows("tenants", "owner_id", id),
+        countRows("contracts", "owner_id", id),
+      ]);
+      if (properties + tenants + contracts > 0) throw new Error(RELATED_MESSAGE);
+      const { error } = await supabase.from("owners").delete().eq("id", id);
+      if (error) throw new Error(RELATED_MESSAGE);
+    },
+    onSuccess: () => invalidateAllPropz(qc),
+  });
+}
+
+export function useDeleteProperty() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const [units, contracts] = await Promise.all([
+        countRows("units", "property_id", id),
+        countRows("contracts", "property_id", id),
+      ]);
+      if (units + contracts > 0) throw new Error(RELATED_MESSAGE);
+      const { error } = await supabase.from("properties").delete().eq("id", id);
+      if (error) throw new Error(RELATED_MESSAGE);
+    },
+    onSuccess: () => invalidateAllPropz(qc),
+  });
+}
+
+export function useDeleteUnit() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const contracts = await countRows("contracts", "unit_id", id);
+      if (contracts > 0) throw new Error(RELATED_MESSAGE);
+      const { error } = await supabase.from("units").delete().eq("id", id);
+      if (error) throw new Error(RELATED_MESSAGE);
+    },
+    onSuccess: () => invalidateAllPropz(qc),
+  });
+}
+
+export function useDeleteTenant() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const contracts = await countRows("contracts", "tenant_id", id);
+      if (contracts > 0) throw new Error(RELATED_MESSAGE);
+      const { error } = await supabase.from("tenants").delete().eq("id", id);
+      if (error) throw new Error(RELATED_MESSAGE);
+    },
+    onSuccess: () => invalidateAllPropz(qc),
+  });
+}
+
+export function useDeleteContract() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { id: string; status: Contract["status"] }) => {
+      if (input.status === "ACTIVO")
+        throw new Error("No puedes eliminar un contrato activo. Finalízalo o cancélalo primero.");
+      const { error } = await supabase.from("contracts").delete().eq("id", input.id);
+      if (error) throw new Error("No pudimos eliminar el contrato. Puede tener información asociada.");
+    },
+    onSuccess: () => invalidateAllPropz(qc),
+  });
+}
