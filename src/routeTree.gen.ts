@@ -18,6 +18,7 @@ import { Route as AuthenticatedPropiedadesIndexRouteImport } from './routes/_aut
 import { Route as AuthenticatedPropiedadesPropertyIdRouteImport } from './routes/_authenticated/propiedades.$propertyId'
 import { Route as AuthenticatedPropietariosIndexRouteImport } from './routes/_authenticated/propietarios.index'
 import { Route as AuthenticatedPropietariosOwnerIdRouteImport } from './routes/_authenticated/propietarios.$ownerId'
+import { Route as AuthenticatedUnidadesIndexRouteImport } from './routes/_authenticated/unidades.index'
 import { Route as AuthenticatedUnidadesUnitIdRouteImport } from './routes/_authenticated/unidades.$unitId'
 
 const IndexRoute = IndexRouteImport.update({
@@ -69,6 +70,12 @@ const AuthenticatedPropietariosOwnerIdRoute =
     path: '/propietarios/$ownerId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedUnidadesIndexRoute =
+  AuthenticatedUnidadesIndexRouteImport.update({
+    id: '/unidades/',
+    path: '/unidades/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedUnidadesUnitIdRoute =
   AuthenticatedUnidadesUnitIdRouteImport.update({
     id: '/unidades/$unitId',
@@ -86,6 +93,7 @@ export interface FileRoutesByFullPath {
   '/unidades/$unitId': typeof AuthenticatedUnidadesUnitIdRoute
   '/propiedades/': typeof AuthenticatedPropiedadesIndexRoute
   '/propietarios/': typeof AuthenticatedPropietariosIndexRoute
+  '/unidades/': typeof AuthenticatedUnidadesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -97,6 +105,7 @@ export interface FileRoutesByTo {
   '/unidades/$unitId': typeof AuthenticatedUnidadesUnitIdRoute
   '/propiedades': typeof AuthenticatedPropiedadesIndexRoute
   '/propietarios': typeof AuthenticatedPropietariosIndexRoute
+  '/unidades': typeof AuthenticatedUnidadesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -110,6 +119,7 @@ export interface FileRoutesById {
   '/_authenticated/unidades/$unitId': typeof AuthenticatedUnidadesUnitIdRoute
   '/_authenticated/propiedades/': typeof AuthenticatedPropiedadesIndexRoute
   '/_authenticated/propietarios/': typeof AuthenticatedPropietariosIndexRoute
+  '/_authenticated/unidades/': typeof AuthenticatedUnidadesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -123,6 +133,7 @@ export interface FileRouteTypes {
     | '/unidades/$unitId'
     | '/propiedades/'
     | '/propietarios/'
+    | '/unidades/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -134,6 +145,7 @@ export interface FileRouteTypes {
     | '/unidades/$unitId'
     | '/propiedades'
     | '/propietarios'
+    | '/unidades'
   id:
     | '__root__'
     | '/'
@@ -146,6 +158,7 @@ export interface FileRouteTypes {
     | '/_authenticated/unidades/$unitId'
     | '/_authenticated/propiedades/'
     | '/_authenticated/propietarios/'
+    | '/_authenticated/unidades/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -219,6 +232,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPropietariosOwnerIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/unidades/': {
+      id: '/_authenticated/unidades/'
+      path: '/unidades'
+      fullPath: '/unidades/'
+      preLoaderRoute: typeof AuthenticatedUnidadesIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/unidades/$unitId': {
       id: '/_authenticated/unidades/$unitId'
       path: '/unidades/$unitId'
@@ -237,6 +257,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedUnidadesUnitIdRoute: typeof AuthenticatedUnidadesUnitIdRoute
   AuthenticatedPropiedadesIndexRoute: typeof AuthenticatedPropiedadesIndexRoute
   AuthenticatedPropietariosIndexRoute: typeof AuthenticatedPropietariosIndexRoute
+  AuthenticatedUnidadesIndexRoute: typeof AuthenticatedUnidadesIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -248,6 +269,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedUnidadesUnitIdRoute: AuthenticatedUnidadesUnitIdRoute,
   AuthenticatedPropiedadesIndexRoute: AuthenticatedPropiedadesIndexRoute,
   AuthenticatedPropietariosIndexRoute: AuthenticatedPropietariosIndexRoute,
+  AuthenticatedUnidadesIndexRoute: AuthenticatedUnidadesIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
