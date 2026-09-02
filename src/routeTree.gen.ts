@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedPagosRouteImport } from './routes/_authenticated/pagos'
 import { Route as AuthenticatedPanelRouteImport } from './routes/_authenticated/panel'
 import { Route as AuthenticatedArrendatariosIndexRouteImport } from './routes/_authenticated/arrendatarios.index'
 import { Route as AuthenticatedContratosIndexRouteImport } from './routes/_authenticated/contratos.index'
@@ -36,6 +37,11 @@ const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedPagosRoute = AuthenticatedPagosRouteImport.update({
+  id: '/pagos',
+  path: '/pagos',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedPanelRoute = AuthenticatedPanelRouteImport.update({
   id: '/panel',
@@ -100,6 +106,7 @@ const AuthenticatedUnidadesUnitIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/pagos': typeof AuthenticatedPagosRoute
   '/panel': typeof AuthenticatedPanelRoute
   '/contratos/$contractId': typeof AuthenticatedContratosContractIdRoute
   '/propiedades/$propertyId': typeof AuthenticatedPropiedadesPropertyIdRoute
@@ -114,6 +121,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/pagos': typeof AuthenticatedPagosRoute
   '/panel': typeof AuthenticatedPanelRoute
   '/contratos/$contractId': typeof AuthenticatedContratosContractIdRoute
   '/propiedades/$propertyId': typeof AuthenticatedPropiedadesPropertyIdRoute
@@ -130,6 +138,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/pagos': typeof AuthenticatedPagosRoute
   '/_authenticated/panel': typeof AuthenticatedPanelRoute
   '/_authenticated/contratos/$contractId': typeof AuthenticatedContratosContractIdRoute
   '/_authenticated/propiedades/$propertyId': typeof AuthenticatedPropiedadesPropertyIdRoute
@@ -146,6 +155,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/pagos'
     | '/panel'
     | '/contratos/$contractId'
     | '/propiedades/$propertyId'
@@ -160,6 +170,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/pagos'
     | '/panel'
     | '/contratos/$contractId'
     | '/propiedades/$propertyId'
@@ -175,6 +186,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/pagos'
     | '/_authenticated/panel'
     | '/_authenticated/contratos/$contractId'
     | '/_authenticated/propiedades/$propertyId'
@@ -215,6 +227,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/pagos': {
+      id: '/_authenticated/pagos'
+      path: '/pagos'
+      fullPath: '/pagos'
+      preLoaderRoute: typeof AuthenticatedPagosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/panel': {
       id: '/_authenticated/panel'
@@ -290,6 +309,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedPagosRoute: typeof AuthenticatedPagosRoute
   AuthenticatedPanelRoute: typeof AuthenticatedPanelRoute
   AuthenticatedContratosContractIdRoute: typeof AuthenticatedContratosContractIdRoute
   AuthenticatedPropiedadesPropertyIdRoute: typeof AuthenticatedPropiedadesPropertyIdRoute
@@ -303,6 +323,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedPagosRoute: AuthenticatedPagosRoute,
   AuthenticatedPanelRoute: AuthenticatedPanelRoute,
   AuthenticatedContratosContractIdRoute: AuthenticatedContratosContractIdRoute,
   AuthenticatedPropiedadesPropertyIdRoute:
