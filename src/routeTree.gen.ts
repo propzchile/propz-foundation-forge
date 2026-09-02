@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedCartolasRouteImport } from './routes/_authenticated/cartolas'
 import { Route as AuthenticatedPagosRouteImport } from './routes/_authenticated/pagos'
 import { Route as AuthenticatedPanelRouteImport } from './routes/_authenticated/panel'
 import { Route as AuthenticatedArrendatariosIndexRouteImport } from './routes/_authenticated/arrendatarios.index'
@@ -37,6 +38,11 @@ const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedCartolasRoute = AuthenticatedCartolasRouteImport.update({
+  id: '/cartolas',
+  path: '/cartolas',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedPagosRoute = AuthenticatedPagosRouteImport.update({
   id: '/pagos',
@@ -106,6 +112,7 @@ const AuthenticatedUnidadesUnitIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/cartolas': typeof AuthenticatedCartolasRoute
   '/pagos': typeof AuthenticatedPagosRoute
   '/panel': typeof AuthenticatedPanelRoute
   '/contratos/$contractId': typeof AuthenticatedContratosContractIdRoute
@@ -121,6 +128,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/cartolas': typeof AuthenticatedCartolasRoute
   '/pagos': typeof AuthenticatedPagosRoute
   '/panel': typeof AuthenticatedPanelRoute
   '/contratos/$contractId': typeof AuthenticatedContratosContractIdRoute
@@ -138,6 +146,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/cartolas': typeof AuthenticatedCartolasRoute
   '/_authenticated/pagos': typeof AuthenticatedPagosRoute
   '/_authenticated/panel': typeof AuthenticatedPanelRoute
   '/_authenticated/contratos/$contractId': typeof AuthenticatedContratosContractIdRoute
@@ -155,6 +164,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/cartolas'
     | '/pagos'
     | '/panel'
     | '/contratos/$contractId'
@@ -170,6 +180,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/cartolas'
     | '/pagos'
     | '/panel'
     | '/contratos/$contractId'
@@ -186,6 +197,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/cartolas'
     | '/_authenticated/pagos'
     | '/_authenticated/panel'
     | '/_authenticated/contratos/$contractId'
@@ -227,6 +239,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/cartolas': {
+      id: '/_authenticated/cartolas'
+      path: '/cartolas'
+      fullPath: '/cartolas'
+      preLoaderRoute: typeof AuthenticatedCartolasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/pagos': {
       id: '/_authenticated/pagos'
@@ -309,6 +328,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedCartolasRoute: typeof AuthenticatedCartolasRoute
   AuthenticatedPagosRoute: typeof AuthenticatedPagosRoute
   AuthenticatedPanelRoute: typeof AuthenticatedPanelRoute
   AuthenticatedContratosContractIdRoute: typeof AuthenticatedContratosContractIdRoute
@@ -323,6 +343,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedCartolasRoute: AuthenticatedCartolasRoute,
   AuthenticatedPagosRoute: AuthenticatedPagosRoute,
   AuthenticatedPanelRoute: AuthenticatedPanelRoute,
   AuthenticatedContratosContractIdRoute: AuthenticatedContratosContractIdRoute,
