@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedPanelRouteImport } from './routes/_authenticated/panel'
 import { Route as AuthenticatedContratosContractIdRouteImport } from './routes/_authenticated/contratos.$contractId'
+import { Route as AuthenticatedPropiedadesIndexRouteImport } from './routes/_authenticated/propiedades.index'
 import { Route as AuthenticatedPropiedadesPropertyIdRouteImport } from './routes/_authenticated/propiedades.$propertyId'
 import { Route as AuthenticatedPropietariosIndexRouteImport } from './routes/_authenticated/propietarios.index'
 import { Route as AuthenticatedPropietariosOwnerIdRouteImport } from './routes/_authenticated/propietarios.$ownerId'
@@ -42,6 +43,12 @@ const AuthenticatedContratosContractIdRoute =
   AuthenticatedContratosContractIdRouteImport.update({
     id: '/contratos/$contractId',
     path: '/contratos/$contractId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPropiedadesIndexRoute =
+  AuthenticatedPropiedadesIndexRouteImport.update({
+    id: '/propiedades/',
+    path: '/propiedades/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedPropiedadesPropertyIdRoute =
@@ -77,6 +84,7 @@ export interface FileRoutesByFullPath {
   '/propiedades/$propertyId': typeof AuthenticatedPropiedadesPropertyIdRoute
   '/propietarios/$ownerId': typeof AuthenticatedPropietariosOwnerIdRoute
   '/unidades/$unitId': typeof AuthenticatedUnidadesUnitIdRoute
+  '/propiedades/': typeof AuthenticatedPropiedadesIndexRoute
   '/propietarios/': typeof AuthenticatedPropietariosIndexRoute
 }
 export interface FileRoutesByTo {
@@ -87,6 +95,7 @@ export interface FileRoutesByTo {
   '/propiedades/$propertyId': typeof AuthenticatedPropiedadesPropertyIdRoute
   '/propietarios/$ownerId': typeof AuthenticatedPropietariosOwnerIdRoute
   '/unidades/$unitId': typeof AuthenticatedUnidadesUnitIdRoute
+  '/propiedades': typeof AuthenticatedPropiedadesIndexRoute
   '/propietarios': typeof AuthenticatedPropietariosIndexRoute
 }
 export interface FileRoutesById {
@@ -99,6 +108,7 @@ export interface FileRoutesById {
   '/_authenticated/propiedades/$propertyId': typeof AuthenticatedPropiedadesPropertyIdRoute
   '/_authenticated/propietarios/$ownerId': typeof AuthenticatedPropietariosOwnerIdRoute
   '/_authenticated/unidades/$unitId': typeof AuthenticatedUnidadesUnitIdRoute
+  '/_authenticated/propiedades/': typeof AuthenticatedPropiedadesIndexRoute
   '/_authenticated/propietarios/': typeof AuthenticatedPropietariosIndexRoute
 }
 export interface FileRouteTypes {
@@ -111,6 +121,7 @@ export interface FileRouteTypes {
     | '/propiedades/$propertyId'
     | '/propietarios/$ownerId'
     | '/unidades/$unitId'
+    | '/propiedades/'
     | '/propietarios/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -121,6 +132,7 @@ export interface FileRouteTypes {
     | '/propiedades/$propertyId'
     | '/propietarios/$ownerId'
     | '/unidades/$unitId'
+    | '/propiedades'
     | '/propietarios'
   id:
     | '__root__'
@@ -132,6 +144,7 @@ export interface FileRouteTypes {
     | '/_authenticated/propiedades/$propertyId'
     | '/_authenticated/propietarios/$ownerId'
     | '/_authenticated/unidades/$unitId'
+    | '/_authenticated/propiedades/'
     | '/_authenticated/propietarios/'
   fileRoutesById: FileRoutesById
 }
@@ -178,6 +191,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedContratosContractIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/propiedades/': {
+      id: '/_authenticated/propiedades/'
+      path: '/propiedades'
+      fullPath: '/propiedades/'
+      preLoaderRoute: typeof AuthenticatedPropiedadesIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/propiedades/$propertyId': {
       id: '/_authenticated/propiedades/$propertyId'
       path: '/propiedades/$propertyId'
@@ -215,6 +235,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPropiedadesPropertyIdRoute: typeof AuthenticatedPropiedadesPropertyIdRoute
   AuthenticatedPropietariosOwnerIdRoute: typeof AuthenticatedPropietariosOwnerIdRoute
   AuthenticatedUnidadesUnitIdRoute: typeof AuthenticatedUnidadesUnitIdRoute
+  AuthenticatedPropiedadesIndexRoute: typeof AuthenticatedPropiedadesIndexRoute
   AuthenticatedPropietariosIndexRoute: typeof AuthenticatedPropietariosIndexRoute
 }
 
@@ -225,6 +246,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
     AuthenticatedPropiedadesPropertyIdRoute,
   AuthenticatedPropietariosOwnerIdRoute: AuthenticatedPropietariosOwnerIdRoute,
   AuthenticatedUnidadesUnitIdRoute: AuthenticatedUnidadesUnitIdRoute,
+  AuthenticatedPropiedadesIndexRoute: AuthenticatedPropiedadesIndexRoute,
   AuthenticatedPropietariosIndexRoute: AuthenticatedPropietariosIndexRoute,
 }
 
