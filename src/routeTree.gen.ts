@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedPanelRouteImport } from './routes/_authenticated/panel'
 import { Route as AuthenticatedArrendatariosIndexRouteImport } from './routes/_authenticated/arrendatarios.index'
+import { Route as AuthenticatedContratosIndexRouteImport } from './routes/_authenticated/contratos.index'
 import { Route as AuthenticatedContratosContractIdRouteImport } from './routes/_authenticated/contratos.$contractId'
 import { Route as AuthenticatedPropiedadesIndexRouteImport } from './routes/_authenticated/propiedades.index'
 import { Route as AuthenticatedPropiedadesPropertyIdRouteImport } from './routes/_authenticated/propiedades.$propertyId'
@@ -45,6 +46,12 @@ const AuthenticatedArrendatariosIndexRoute =
   AuthenticatedArrendatariosIndexRouteImport.update({
     id: '/arrendatarios/',
     path: '/arrendatarios/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedContratosIndexRoute =
+  AuthenticatedContratosIndexRouteImport.update({
+    id: '/contratos/',
+    path: '/contratos/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedContratosContractIdRoute =
@@ -99,6 +106,7 @@ export interface FileRoutesByFullPath {
   '/propietarios/$ownerId': typeof AuthenticatedPropietariosOwnerIdRoute
   '/unidades/$unitId': typeof AuthenticatedUnidadesUnitIdRoute
   '/arrendatarios/': typeof AuthenticatedArrendatariosIndexRoute
+  '/contratos/': typeof AuthenticatedContratosIndexRoute
   '/propiedades/': typeof AuthenticatedPropiedadesIndexRoute
   '/propietarios/': typeof AuthenticatedPropietariosIndexRoute
   '/unidades/': typeof AuthenticatedUnidadesIndexRoute
@@ -112,6 +120,7 @@ export interface FileRoutesByTo {
   '/propietarios/$ownerId': typeof AuthenticatedPropietariosOwnerIdRoute
   '/unidades/$unitId': typeof AuthenticatedUnidadesUnitIdRoute
   '/arrendatarios': typeof AuthenticatedArrendatariosIndexRoute
+  '/contratos': typeof AuthenticatedContratosIndexRoute
   '/propiedades': typeof AuthenticatedPropiedadesIndexRoute
   '/propietarios': typeof AuthenticatedPropietariosIndexRoute
   '/unidades': typeof AuthenticatedUnidadesIndexRoute
@@ -127,6 +136,7 @@ export interface FileRoutesById {
   '/_authenticated/propietarios/$ownerId': typeof AuthenticatedPropietariosOwnerIdRoute
   '/_authenticated/unidades/$unitId': typeof AuthenticatedUnidadesUnitIdRoute
   '/_authenticated/arrendatarios/': typeof AuthenticatedArrendatariosIndexRoute
+  '/_authenticated/contratos/': typeof AuthenticatedContratosIndexRoute
   '/_authenticated/propiedades/': typeof AuthenticatedPropiedadesIndexRoute
   '/_authenticated/propietarios/': typeof AuthenticatedPropietariosIndexRoute
   '/_authenticated/unidades/': typeof AuthenticatedUnidadesIndexRoute
@@ -142,6 +152,7 @@ export interface FileRouteTypes {
     | '/propietarios/$ownerId'
     | '/unidades/$unitId'
     | '/arrendatarios/'
+    | '/contratos/'
     | '/propiedades/'
     | '/propietarios/'
     | '/unidades/'
@@ -155,6 +166,7 @@ export interface FileRouteTypes {
     | '/propietarios/$ownerId'
     | '/unidades/$unitId'
     | '/arrendatarios'
+    | '/contratos'
     | '/propiedades'
     | '/propietarios'
     | '/unidades'
@@ -169,6 +181,7 @@ export interface FileRouteTypes {
     | '/_authenticated/propietarios/$ownerId'
     | '/_authenticated/unidades/$unitId'
     | '/_authenticated/arrendatarios/'
+    | '/_authenticated/contratos/'
     | '/_authenticated/propiedades/'
     | '/_authenticated/propietarios/'
     | '/_authenticated/unidades/'
@@ -215,6 +228,13 @@ declare module '@tanstack/react-router' {
       path: '/arrendatarios'
       fullPath: '/arrendatarios/'
       preLoaderRoute: typeof AuthenticatedArrendatariosIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/contratos/': {
+      id: '/_authenticated/contratos/'
+      path: '/contratos'
+      fullPath: '/contratos/'
+      preLoaderRoute: typeof AuthenticatedContratosIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/contratos/$contractId': {
@@ -276,6 +296,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPropietariosOwnerIdRoute: typeof AuthenticatedPropietariosOwnerIdRoute
   AuthenticatedUnidadesUnitIdRoute: typeof AuthenticatedUnidadesUnitIdRoute
   AuthenticatedArrendatariosIndexRoute: typeof AuthenticatedArrendatariosIndexRoute
+  AuthenticatedContratosIndexRoute: typeof AuthenticatedContratosIndexRoute
   AuthenticatedPropiedadesIndexRoute: typeof AuthenticatedPropiedadesIndexRoute
   AuthenticatedPropietariosIndexRoute: typeof AuthenticatedPropietariosIndexRoute
   AuthenticatedUnidadesIndexRoute: typeof AuthenticatedUnidadesIndexRoute
@@ -289,6 +310,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPropietariosOwnerIdRoute: AuthenticatedPropietariosOwnerIdRoute,
   AuthenticatedUnidadesUnitIdRoute: AuthenticatedUnidadesUnitIdRoute,
   AuthenticatedArrendatariosIndexRoute: AuthenticatedArrendatariosIndexRoute,
+  AuthenticatedContratosIndexRoute: AuthenticatedContratosIndexRoute,
   AuthenticatedPropiedadesIndexRoute: AuthenticatedPropiedadesIndexRoute,
   AuthenticatedPropietariosIndexRoute: AuthenticatedPropietariosIndexRoute,
   AuthenticatedUnidadesIndexRoute: AuthenticatedUnidadesIndexRoute,
