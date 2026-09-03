@@ -1,7 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Building2, Users, FileText, Home } from "lucide-react";
+import {
+  Building2,
+  Users,
+  FileText,
+  Home,
+  KeyRound,
+  DoorOpen,
+  Bell,
+  Plus,
+} from "lucide-react";
 
 import {
   AppShell,
@@ -9,34 +18,33 @@ import {
   ErrorState,
   LoadingState,
   PropzLogo,
+  StatusBadge,
 } from "@/components/propz/app-shell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAppContext } from "@/lib/propz/session";
 import {
+  useAllUnits,
   useContracts,
-  useCreateOwner,
   useOwners,
   useProperties,
-  useMyOwner,
   useSeedDemoData,
   useSetPrimaryRole,
-  useTenants,
 } from "@/lib/propz/queries";
 
 export const Route = createFileRoute("/_authenticated/panel")({
   head: () => ({
     meta: [
-      { title: "Panel de contexto — Propz" },
+      { title: "Panel Operativo — Propz" },
       {
         name: "description",
         content:
-          "Punto de entrada de Propz: identifica tu tipo de usuario y accede a tu cartera o a tu administración.",
+          "Resumen operativo de tu cartera inmobiliaria en Propz: propiedades, unidades, ocupación y contratos activos.",
       },
-      { property: "og:title", content: "Panel de contexto — Propz" },
+      { property: "og:title", content: "Panel Operativo — Propz" },
       {
         property: "og:description",
-        content: "Accede a tu cartera propia o a los propietarios que administras en Propz.",
+        content: "Propiedades, unidades, ocupación y contratos activos de tu cartera en Propz.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -57,7 +65,7 @@ function PanelPage() {
   }
 
   if (!ctx.role) return <RoleOnboarding />;
-  return ctx.isAdmin ? <AdminPanel /> : <OwnerPanel />;
+  return <OperationalPanel />;
 }
 
 function RoleOnboarding() {
@@ -143,169 +151,281 @@ function DemoDataButton() {
   );
 }
 
-function MetricCard({
+function KpiCard({
   icon: Icon,
   label,
   value,
+  hint,
 }: {
   icon: typeof Building2;
   label: string;
   value: number | string;
+  hint?: string;
 }) {
   return (
     <Card>
-      <CardContent className="flex items-center gap-3 pt-6">
-        <span className="grid size-10 place-items-center rounded-lg bg-secondary text-secondary-foreground">
+      <CardContent className="flex items-start gap-3 pt-6">
+        <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-secondary text-secondary-foreground">
           <Icon className="size-5" />
         </span>
-        <div>
-          <div className="text-xl font-semibold">{value}</div>
-          <div className="text-xs text-muted-foreground">{label}</div>
+        <div className="min-w-0">
+          <div className="text-2xl font-semibold tabular-nums">{value}</div>
+          <div className="text-xs font-medium text-muted-foreground">{label}</div>
+          {hint && <div className="mt-0.5 text-[11px] text-muted-foreground/80">{hint}</div>}
         </div>
       </CardContent>
     </Card>
   );
 }
 
-function AdminPanel() {
-  const owners = useOwners();
-  const properties = useProperties();
-  const tenants = useTenants();
-  const contracts = useContracts({});
-
+function SummaryRow({ label, value }: { label: string; value: number | string }) {
   return (
-    <AppShell
-      title="Mi administración"
-      description="Cartera de propietarios y clientes que administras."
-      crumbs={[{ label: "Mi administración" }]}
-      actions={
-        <div className="flex gap-2">
-          <DemoDataButton />
-          <Button asChild>
-            <Link to="/propietarios">Ver propietarios</Link>
-          </Button>
-        </div>
-      }
-    >
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <MetricCard icon={Users} label="Propietarios" value={owners.data?.length ?? 0} />
-        <MetricCard icon={Building2} label="Propiedades" value={properties.data?.length ?? 0} />
-        <MetricCard icon={Home} label="Arrendatarios" value={tenants.data?.length ?? 0} />
-        <MetricCard icon={FileText} label="Contratos" value={contracts.data?.length ?? 0} />
-      </div>
-
-      <h2 className="mt-10 mb-3 text-lg font-semibold">Propietarios / clientes</h2>
-      {(owners.data?.length ?? 0) === 0 ? (
-        <EmptyState
-          title="Aún no administras propietarios"
-          hint="Crea tu primer cliente o carga los datos demo para explorar la jerarquía."
-        />
-      ) : (
-        <div className="grid gap-3 md:grid-cols-2">
-          {owners.data!.map((o) => (
-            <Link
-              key={o.id}
-              to="/propietarios/$ownerId"
-              params={{ ownerId: o.id }}
-              className="surface-card block p-4 transition-colors hover:border-accent"
-            >
-              <div className="flex items-center justify-between">
-                <span className="font-medium">{o.display_name}</span>
-                <span className="text-xs text-muted-foreground">{o.tax_id ?? "—"}</span>
-              </div>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {o.party_type === "empresa" ? "Empresa" : "Persona natural"} · {o.status}
-                {o.is_demo ? " · demo" : ""}
-              </p>
-            </Link>
-          ))}
-        </div>
-      )}
-    </AppShell>
+    <div className="flex items-center justify-between border-b py-2 last:border-b-0">
+      <span className="text-sm text-muted-foreground">{label}</span>
+      <span className="text-sm font-semibold tabular-nums">{value}</span>
+    </div>
   );
 }
 
-function OwnerPanel() {
-  const createOwner = useCreateOwner();
+function OperationalPanel() {
   const ctx = useAppContext();
   const properties = useProperties();
+  const units = useAllUnits();
+  const owners = useOwners();
   const contracts = useContracts({});
-  const myOwnerQuery = useMyOwner(ctx.userId);
-  const myOwner = myOwnerQuery.data ?? null;
+
+  const isLoading =
+    properties.isLoading || units.isLoading || owners.isLoading || contracts.isLoading;
+  const isError = properties.isError || units.isError || owners.isError || contracts.isError;
+
+  const activeUnits = (units.data ?? []).filter((u) => u.status !== "archivado");
+  const activeContracts = (contracts.data ?? []).filter((c) => c.status === "ACTIVO");
+  const occupiedUnitIds = new Set(
+    activeContracts.map((c) => c.unit_id).filter((id): id is string => Boolean(id)),
+  );
+
+  const totalUnits = activeUnits.length;
+  const occupied = activeUnits.filter((u) => occupiedUnitIds.has(u.id)).length;
+  const available = totalUnits - occupied;
+  const occupancyPct = totalUnits > 0 ? Math.round((occupied / totalUnits) * 100) : null;
+
+  const activeProperties = (properties.data ?? []).filter((p) => p.status !== "archivado");
+  const ownerNameById = new Map((owners.data ?? []).map((o) => [o.id, o.display_name]));
+
+  const displayName =
+    [ctx.profile?.first_name, ctx.profile?.last_name].filter(Boolean).join(" ") ||
+    ctx.email ||
+    "Usuario";
+  const roleLabel = ctx.isAdmin ? "Administrador profesional" : "Propietario autogestionado";
 
   return (
     <AppShell
-      title="Mi cartera"
-      description="Tus propiedades, unidades, contratos y arrendatarios."
-      crumbs={[{ label: "Mi cartera" }]}
+      title="Panel Operativo"
+      description="Resumen de tu cartera inmobiliaria"
+      crumbs={[{ label: "Panel Operativo" }]}
       actions={<DemoDataButton />}
     >
-      <div className="grid gap-4 sm:grid-cols-3">
-        <MetricCard icon={Building2} label="Propiedades" value={properties.data?.length ?? 0} />
-        <MetricCard icon={FileText} label="Contratos" value={contracts.data?.length ?? 0} />
-        <MetricCard
-          icon={Users}
-          label="Contratos activos"
-          value={contracts.data?.filter((c) => c.status === "ACTIVO").length ?? 0}
-        />
-      </div>
+      <p className="-mt-4 mb-6 text-sm text-muted-foreground">
+        {displayName} · <span className="font-medium text-foreground">{roleLabel}</span>
+      </p>
 
-      <div className="mt-10">
-        {myOwnerQuery.isLoading ? (
-          <LoadingState label="Cargando tu cartera…" />
-        ) : myOwnerQuery.isError ? (
-          <ErrorState
-            title="No pudimos cargar tu cartera"
-            hint="Puede ser un problema momentáneo de conexión. Vuelve a intentarlo."
-            onRetry={() => myOwnerQuery.refetch()}
-            retrying={myOwnerQuery.isFetching}
-          />
-        ) : !myOwner ? (
-          <div className="surface-card p-6">
-            <h2 className="text-lg font-semibold">Crea tu ficha de propietario</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Toda propiedad pertenece a un propietario. Crearemos tu ficha con los datos de tu
-              perfil.
-            </p>
-            <Button
-              className="mt-4"
-              disabled={createOwner.isPending}
-              onClick={async () => {
-                try {
-                  await createOwner.mutateAsync({
-                    display_name:
-                      [ctx.profile?.first_name, ctx.profile?.last_name]
-                        .filter(Boolean)
-                        .join(" ")
-                        .trim() ||
-                      ctx.email ||
-                      "Propietario",
-                    party_type: "natural",
-                    email: ctx.email,
-                    linkToSelf: true,
-                  });
-                  toast.success("Ficha creada");
-                } catch (e) {
-                  toast.error((e as Error).message);
-                }
-              }}
-            >
-              Crear mi ficha
-            </Button>
-          </div>
-        ) : (
-          <Link
-            to="/propietarios/$ownerId"
-            params={{ ownerId: myOwner.id }}
-            className="surface-card block p-6 transition-colors hover:border-accent"
-          >
-            <h2 className="text-lg font-semibold">{myOwner.display_name}</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Entrar a la cartera: propiedades, unidades, contratos y arrendatarios.
-            </p>
-          </Link>
-        )}
-      </div>
+      {isLoading ? (
+        <LoadingState label="Cargando tu cartera…" />
+      ) : isError ? (
+        <ErrorState
+          onRetry={() => {
+            properties.refetch();
+            units.refetch();
+            owners.refetch();
+            contracts.refetch();
+          }}
+          retrying={properties.isFetching || units.isFetching}
+        />
+      ) : (
+        <div className="space-y-10">
+          {/* KPIs */}
+          <section aria-label="Indicadores principales">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <KpiCard icon={Building2} label="Propiedades" value={activeProperties.length} />
+              <KpiCard icon={Home} label="Unidades" value={totalUnits} />
+              <KpiCard
+                icon={KeyRound}
+                label="Ocupación"
+                value={occupancyPct === null ? "—" : `${occupancyPct}%`}
+                hint={totalUnits > 0 ? `${occupied} de ${totalUnits} unidades` : "Sin unidades"}
+              />
+              <KpiCard icon={DoorOpen} label="Disponibles" value={available} />
+              <KpiCard icon={Users} label="Propietarios" value={owners.data?.length ?? 0} />
+              <KpiCard icon={FileText} label="Contratos activos" value={activeContracts.length} />
+            </div>
+          </section>
+
+          {/* Ocupación + resumen */}
+          <section className="grid gap-4 lg:grid-cols-3" aria-label="Estado de ocupación">
+            <Card className="lg:col-span-2">
+              <CardHeader>
+                <CardTitle className="text-base">Estado de ocupación</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {totalUnits === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    Aún no hay unidades registradas para calcular la ocupación.
+                  </p>
+                ) : (
+                  <>
+                    <div className="flex items-end justify-between">
+                      <span className="text-3xl font-semibold tabular-nums">{occupancyPct}%</span>
+                      <span className="text-sm text-muted-foreground">
+                        {occupied} ocupadas · {available} disponibles
+                      </span>
+                    </div>
+                    <div
+                      className="mt-3 h-2.5 w-full overflow-hidden rounded-full bg-muted"
+                      role="progressbar"
+                      aria-valuenow={occupancyPct ?? 0}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-label="Porcentaje de ocupación"
+                    >
+                      <div
+                        className="h-full rounded-full bg-accent transition-[width]"
+                        style={{ width: `${occupancyPct}%` }}
+                      />
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Resumen de cartera</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <SummaryRow label="Propiedades" value={activeProperties.length} />
+                <SummaryRow label="Unidades" value={totalUnits} />
+                <SummaryRow label="Ocupadas" value={occupied} />
+                <SummaryRow label="Disponibles" value={available} />
+                <SummaryRow label="Contratos activos" value={activeContracts.length} />
+              </CardContent>
+            </Card>
+          </section>
+
+          {/* Acciones rápidas */}
+          <section aria-label="Acciones rápidas">
+            <h2 className="mb-3 text-lg font-semibold">Acciones rápidas</h2>
+            <div className="flex flex-wrap gap-2">
+              <Button asChild variant="outline">
+                <Link to="/propiedades">
+                  <Plus className="size-4" /> Nueva propiedad
+                </Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link to="/propietarios">
+                  <Plus className="size-4" /> Nuevo propietario
+                </Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link to="/unidades">
+                  <Plus className="size-4" /> Nueva unidad
+                </Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link to="/contratos">
+                  <Plus className="size-4" /> Nuevo contrato
+                </Link>
+              </Button>
+            </div>
+          </section>
+
+          {/* Mis propiedades */}
+          <section aria-label="Mis propiedades">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-lg font-semibold">Mis propiedades</h2>
+              {activeProperties.length > 0 && (
+                <Button asChild variant="ghost" size="sm">
+                  <Link to="/propiedades">Ver todas</Link>
+                </Button>
+              )}
+            </div>
+            {activeProperties.length === 0 ? (
+              <div className="space-y-4">
+                <EmptyState
+                  title="Aún no hay propiedades"
+                  hint="Crea tu primera propiedad para comenzar a gestionar unidades y contratos."
+                />
+                <div className="flex justify-center">
+                  <Button asChild>
+                    <Link to="/propiedades">
+                      <Plus className="size-4" /> Nueva propiedad
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="grid gap-3 md:grid-cols-2">
+                {activeProperties.map((p) => {
+                  const pUnits = activeUnits.filter((u) => u.property_id === p.id);
+                  const pOccupied = pUnits.filter((u) => occupiedUnitIds.has(u.id)).length;
+                  return (
+                    <Link
+                      key={p.id}
+                      to="/propiedades/$propertyId"
+                      params={{ propertyId: p.id }}
+                      className="surface-card block p-4 transition-colors hover:border-accent"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <span className="font-medium">{p.alias}</span>
+                        <StatusBadge status={p.status} />
+                      </div>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {p.address}
+                        {p.comuna ? `, ${p.comuna}` : ""}
+                      </p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        Propietario: {ownerNameById.get(p.owner_id) ?? "—"}
+                      </p>
+                      <div className="mt-3 flex gap-4 text-xs">
+                        <span>
+                          <span className="font-semibold tabular-nums">{pUnits.length}</span>{" "}
+                          unidades
+                        </span>
+                        <span>
+                          <span className="font-semibold tabular-nums">{pOccupied}</span> ocupadas
+                        </span>
+                        <span>
+                          <span className="font-semibold tabular-nums">
+                            {pUnits.length - pOccupied}
+                          </span>{" "}
+                          disponibles
+                        </span>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+
+          {/* Alertas */}
+          <section aria-label="Alertas">
+            <h2 className="mb-3 text-lg font-semibold">Alertas</h2>
+            <Card>
+              <CardContent className="flex flex-wrap items-center justify-between gap-3 pt-6">
+                <div className="flex items-center gap-3">
+                  <span className="grid size-9 place-items-center rounded-lg bg-secondary text-secondary-foreground">
+                    <Bell className="size-4" />
+                  </span>
+                  <p className="text-sm text-muted-foreground">Sin alertas pendientes</p>
+                </div>
+                <Button asChild variant="ghost" size="sm">
+                  <Link to="/alertas">Ir a alertas</Link>
+                </Button>
+              </CardContent>
+            </Card>
+          </section>
+        </div>
+      )}
     </AppShell>
   );
 }
