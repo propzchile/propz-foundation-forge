@@ -63,15 +63,36 @@ export function useCreateOwner() {
       tax_id?: string | null;
       email?: string | null;
       phone?: string | null;
+      notes?: string | null;
       /** Se usa cuando el propietario autogestionado crea su propia ficha. */
       linkToSelf?: boolean;
     }) => {
       const { data: auth } = await supabase.auth.getUser();
       const uid = auth.user?.id;
+      if (!uid) throw new Error("Tu sesión expiró. Vuelve a iniciar sesión.");
       const { linkToSelf, ...rest } = input;
+
+      // `owners_insert` exige created_by = auth.uid() y, o bien user_id = auth.uid(),
+      // o bien user_id NULL cuando el usuario es administrador.
+      const payload: Record<string, unknown> = { ...rest, created_by: uid };
+      if (linkToSelf) {
+        payload.user_id = uid;
+      } else {
+        const { data: isAdmin, error: roleError } = await supabase.rpc("has_role", {
+          _user_id: uid,
+          _role: "administrador",
+        });
+        if (roleError) throw roleError;
+        if (!isAdmin) {
+          // Sin rol de administrador solo puede crear su propia ficha.
+          payload.user_id = uid;
+        }
+        // Como administrador: no se envía user_id (queda NULL), tal como exige la policy.
+      }
+
       const { data, error } = await supabase
         .from("owners")
-        .insert({ ...rest, user_id: linkToSelf ? (uid ?? null) : null })
+        .insert(payload as never)
         .select()
         .single();
       if (error) throw error;
@@ -116,31 +137,62 @@ export function useUpdateOwner() {
   });
 }
 
+/**
+ * Archiva o reactiva un propietario y arrastra su cartera (propiedades, unidades,
+ * arrendatarios y contratos) fuera/dentro de la operación activa. No borra nada.
+ */
 export function useSetOwnerArchived() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: { id: string; archived: boolean }) => {
+      const archivedPatch = input.archived
+        ? { status: "archivado" as const, archived_at: new Date().toISOString() }
+        : { status: "activo" as const, archived_at: null };
+
       const { data, error } = await supabase
         .from("owners")
-        .update(
-          input.archived
-            ? { status: "archivado" as const, archived_at: new Date().toISOString() }
-            : { status: "activo" as const, archived_at: null },
-        )
+        .update(archivedPatch)
         .eq("id", input.id)
         .select()
         .maybeSingle();
       if (error) throw error;
       if (!data) throw new Error("No tienes permiso para cambiar el estado de este propietario.");
+
+      // Cascada de estado (no destructiva).
+      const { data: props } = await supabase
+        .from("properties")
+        .select("id")
+        .eq("owner_id", input.id);
+      const propertyIds = (props ?? []).map((p) => p.id);
+
+      await supabase.from("properties").update(archivedPatch).eq("owner_id", input.id);
+      await supabase.from("tenants").update(archivedPatch).eq("owner_id", input.id);
+      if (propertyIds.length > 0) {
+        await supabase.from("units").update(archivedPatch).in("property_id", propertyIds);
+      }
+      await supabase
+        .from("contracts")
+        .update({ archived_at: input.archived ? new Date().toISOString() : null })
+        .eq("owner_id", input.id);
+
       return data;
     },
     onSuccess: (row) => {
-      qc.invalidateQueries({ queryKey: ["owners"] });
+      invalidateAllPropz(qc);
       qc.invalidateQueries({ queryKey: ["owner", row.id] });
-      qc.invalidateQueries({ queryKey: ["my-owner"] });
     },
   });
 }
+
+/** Ids de propietarios que participan en la operación activa. */
+export function useActiveOwnerIds() {
+  const owners = useOwners();
+  const ids = new Set(
+    (owners.data ?? []).filter((o) => o.status !== "archivado").map((o) => o.id),
+  );
+  return ids;
+}
+
 
 /* -------------------------------- PROPERTIES ------------------------------- */
 
