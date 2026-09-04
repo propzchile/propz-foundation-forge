@@ -701,9 +701,12 @@ export function useDeleteOwner() {
         countRows("contracts", "owner_id", id),
       ]);
       if (properties + tenants + contracts > 0) throw new Error(RELATED_MESSAGE);
-      const { error } = await supabase.from("owners").delete().eq("id", id);
+      const { data, error } = await supabase.from("owners").delete().eq("id", id).select("id");
       if (error) throw new Error(RELATED_MESSAGE);
+      if (!data || data.length === 0)
+        throw new Error("No tienes permiso para eliminar este propietario.");
     },
+
     onSuccess: () => invalidateAllPropz(qc),
   });
 }
