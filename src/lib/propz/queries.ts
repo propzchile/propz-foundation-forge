@@ -76,7 +76,7 @@ export function useCreateOwner() {
       // o bien user_id NULL cuando el usuario es administrador.
       const payload: Record<string, unknown> = { ...rest, created_by: uid };
       if (linkToSelf) {
-        payload.user_id = uid;
+        payload['user_id'] = uid;
       } else {
         const { data: isAdmin, error: roleError } = await supabase.rpc("has_role", {
           _user_id: uid,
@@ -85,7 +85,7 @@ export function useCreateOwner() {
         if (roleError) throw roleError;
         if (!isAdmin) {
           // Sin rol de administrador solo puede crear su propia ficha.
-          payload.user_id = uid;
+          payload['user_id'] = uid;
         }
         // Como administrador: no se envía user_id (queda NULL), tal como exige la policy.
       }
