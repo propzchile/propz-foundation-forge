@@ -90,13 +90,8 @@ export function useCreateOwner() {
         // Como administrador: no se envía user_id (queda NULL), tal como exige la policy.
       }
 
-      const { data, error } = await supabase
-        .from("owners")
-        .insert(payload as never)
-        .select()
-        .single();
+      const { error } = await supabase.from("owners").insert(payload as never);
       if (error) throw error;
-      return data;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["owners"] });
