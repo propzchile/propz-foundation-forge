@@ -318,14 +318,16 @@ function OperationalPanel() {
           <section aria-label="Acciones rápidas">
             <h2 className="mb-3 text-lg font-semibold">Acciones rápidas</h2>
             <div className="flex flex-wrap gap-2">
+              {ctx.isAdmin && (
+                <Button asChild variant="outline">
+                  <Link to="/propietarios">
+                    <Plus className="size-4" /> Nuevo propietario
+                  </Link>
+                </Button>
+              )}
               <Button asChild variant="outline">
                 <Link to="/propiedades">
                   <Plus className="size-4" /> Nueva propiedad
-                </Link>
-              </Button>
-              <Button asChild variant="outline">
-                <Link to="/propietarios">
-                  <Plus className="size-4" /> Nuevo propietario
                 </Link>
               </Button>
               <Button asChild variant="outline">
@@ -334,11 +336,17 @@ function OperationalPanel() {
                 </Link>
               </Button>
               <Button asChild variant="outline">
+                <Link to="/arrendatarios">
+                  <Plus className="size-4" /> Nuevo arrendatario
+                </Link>
+              </Button>
+              <Button asChild variant="outline">
                 <Link to="/contratos">
                   <Plus className="size-4" /> Nuevo contrato
                 </Link>
               </Button>
             </div>
+
           </section>
 
           {/* Mis propiedades */}
