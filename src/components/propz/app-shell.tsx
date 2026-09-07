@@ -66,8 +66,7 @@ function SidebarNav({ onNavigate, isAdmin }: { onNavigate?: () => void; isAdmin?
   })).filter((group) => group.items.length > 0);
   return (
     <nav className="space-y-6" aria-label="Navegación principal">
-
-      {NAV.map((group, gi) => (
+      {groups.map((group, gi) => (
         <div key={group.title ?? `g-${gi}`}>
           {group.title && (
             <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-sidebar-foreground/50">
@@ -138,7 +137,7 @@ export function AppShell({
   actions?: ReactNode;
   children: ReactNode;
 }) {
-  const { role, profile, email } = useAppContext();
+  const { role, profile, email, isAdmin } = useAppContext();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [mobileNav, setMobileNav] = useState(false);
@@ -162,7 +161,7 @@ export function AppShell({
         <Link to="/panel" className="mb-8 px-2 text-sidebar-foreground">
           <PropzLogo />
         </Link>
-        <SidebarNav />
+        <SidebarNav isAdmin={isAdmin} />
       </aside>
 
       <div className="min-w-0 flex-1">
@@ -203,7 +202,7 @@ export function AppShell({
           </div>
           {mobileNav && (
             <div className="border-t bg-sidebar px-3 py-4 lg:hidden">
-              <SidebarNav onNavigate={() => setMobileNav(false)} />
+              <SidebarNav isAdmin={isAdmin} onNavigate={() => setMobileNav(false)} />
             </div>
           )}
         </header>
