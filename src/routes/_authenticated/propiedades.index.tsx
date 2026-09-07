@@ -51,11 +51,18 @@ export const Route = createFileRoute("/_authenticated/propiedades/")({
 });
 
 function NewPropertyDialog() {
+  const ctx = useAppContext();
   const owners = useOwners();
+  const myOwner = useMyOwner(ctx.userId);
   const create = useCreateProperty();
   const [open, setOpen] = useState(false);
   const activeOwners = (owners.data ?? []).filter((o) => o.status !== "archivado");
   const [ownerId, setOwnerId] = useState<string>("");
+
+  // Modo propietario: todo queda asociado automáticamente a su propia ficha.
+  const selfOwnerId = !ctx.isAdmin ? (myOwner.data?.id ?? "") : "";
+  const effectiveOwnerId = ctx.isAdmin ? ownerId : selfOwnerId;
+  const noOwner = ctx.isAdmin ? activeOwners.length === 0 : !selfOwnerId;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -66,37 +73,41 @@ function NewPropertyDialog() {
         <DialogHeader>
           <DialogTitle>Nueva propiedad</DialogTitle>
         </DialogHeader>
-        {activeOwners.length === 0 ? (
+        {noOwner ? (
           <p className="text-sm text-muted-foreground">
-            Primero crea un propietario: toda propiedad debe pertenecer a uno.
+            {ctx.isAdmin
+              ? "Primero crea un propietario: toda propiedad debe pertenecer a uno."
+              : "Aún no tienes tu ficha de propietario creada. Complétala desde el panel para poder registrar propiedades."}
           </p>
         ) : (
           <div className="space-y-4">
-            <div className="space-y-1.5">
-              <span className="text-sm font-medium">Propietario</span>
-              <Select value={ownerId} onValueChange={setOwnerId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecciona un propietario" />
-                </SelectTrigger>
-                <SelectContent>
-                  {activeOwners.map((o) => (
-                    <SelectItem key={o.id} value={o.id}>
-                      {o.display_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {ctx.isAdmin && (
+              <div className="space-y-1.5">
+                <span className="text-sm font-medium">Propietario</span>
+                <Select value={ownerId} onValueChange={setOwnerId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona un propietario" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {activeOwners.map((o) => (
+                      <SelectItem key={o.id} value={o.id}>
+                        {o.display_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <PropertyForm
               mode="create"
               pending={create.isPending}
               onSubmit={async (values) => {
-                if (!ownerId) {
+                if (!effectiveOwnerId) {
                   toast.error("Selecciona un propietario");
                   return;
                 }
                 try {
-                  await create.mutateAsync({ owner_id: ownerId, ...values });
+                  await create.mutateAsync({ owner_id: effectiveOwnerId, ...values });
                   toast.success("Propiedad creada");
                   setOpen(false);
                 } catch (e) {
@@ -110,6 +121,7 @@ function NewPropertyDialog() {
     </Dialog>
   );
 }
+
 
 function PropertiesListPage() {
   const properties = useProperties();

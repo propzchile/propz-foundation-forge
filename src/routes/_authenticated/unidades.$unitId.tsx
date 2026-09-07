@@ -191,7 +191,7 @@ function NewContractDialog({
     status: "ACTIVO" as ContractStatus,
     rent_amount: "",
     currency: "CLP",
-    periodicity: "MENSUAL" as ContractPeriodicity,
+    periodicity: "mensual" as ContractPeriodicity,
     due_day: "5",
   });
 
@@ -213,7 +213,7 @@ function NewContractDialog({
               return;
             }
             try {
-              await create.mutateAsync({
+              const created = await create.mutateAsync({
                 owner_id: ownerId,
                 property_id: propertyId,
                 unit_id: unitId,
@@ -226,8 +226,14 @@ function NewContractDialog({
                 periodicity: form.periodicity,
                 due_day: Number(form.due_day),
               });
-              toast.success("Contrato creado");
+              const extra = created.linked_unit_ids.length - 1;
+              toast.success(
+                extra > 0
+                  ? `Contrato creado con ${extra + 1} unidades del conjunto`
+                  : "Contrato creado",
+              );
               setOpen(false);
+
             } catch (err) {
               toast.error((err as Error).message);
             }

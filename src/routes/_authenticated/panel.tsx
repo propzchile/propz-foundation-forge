@@ -246,8 +246,12 @@ function OperationalPanel() {
           {/* KPIs */}
           <section aria-label="Indicadores principales">
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {ctx.isAdmin && (
+                <KpiCard icon={Users} label="Propietarios" value={owners.data?.length ?? 0} />
+              )}
               <KpiCard icon={Building2} label="Propiedades" value={activeProperties.length} />
               <KpiCard icon={Home} label="Unidades" value={totalUnits} />
+              <KpiCard icon={FileText} label="Contratos activos" value={activeContracts.length} />
               <KpiCard
                 icon={KeyRound}
                 label="Ocupación"
@@ -255,9 +259,8 @@ function OperationalPanel() {
                 hint={totalUnits > 0 ? `${occupied} de ${totalUnits} unidades` : "Sin unidades"}
               />
               <KpiCard icon={DoorOpen} label="Disponibles" value={available} />
-              <KpiCard icon={Users} label="Propietarios" value={owners.data?.length ?? 0} />
-              <KpiCard icon={FileText} label="Contratos activos" value={activeContracts.length} />
             </div>
+
           </section>
 
           {/* Ocupación + resumen */}
@@ -315,14 +318,16 @@ function OperationalPanel() {
           <section aria-label="Acciones rápidas">
             <h2 className="mb-3 text-lg font-semibold">Acciones rápidas</h2>
             <div className="flex flex-wrap gap-2">
+              {ctx.isAdmin && (
+                <Button asChild variant="outline">
+                  <Link to="/propietarios">
+                    <Plus className="size-4" /> Nuevo propietario
+                  </Link>
+                </Button>
+              )}
               <Button asChild variant="outline">
                 <Link to="/propiedades">
                   <Plus className="size-4" /> Nueva propiedad
-                </Link>
-              </Button>
-              <Button asChild variant="outline">
-                <Link to="/propietarios">
-                  <Plus className="size-4" /> Nuevo propietario
                 </Link>
               </Button>
               <Button asChild variant="outline">
@@ -331,11 +336,17 @@ function OperationalPanel() {
                 </Link>
               </Button>
               <Button asChild variant="outline">
+                <Link to="/arrendatarios">
+                  <Plus className="size-4" /> Nuevo arrendatario
+                </Link>
+              </Button>
+              <Button asChild variant="outline">
                 <Link to="/contratos">
                   <Plus className="size-4" /> Nuevo contrato
                 </Link>
               </Button>
             </div>
+
           </section>
 
           {/* Mis propiedades */}
