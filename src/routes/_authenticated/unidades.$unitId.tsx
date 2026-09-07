@@ -191,7 +191,7 @@ function NewContractDialog({
     status: "ACTIVO" as ContractStatus,
     rent_amount: "",
     currency: "CLP",
-    periodicity: "MENSUAL" as ContractPeriodicity,
+    periodicity: "mensual" as ContractPeriodicity,
     due_day: "5",
   });
 
