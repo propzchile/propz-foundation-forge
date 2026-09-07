@@ -491,6 +491,11 @@ export function useContract(contractId: string) {
   });
 }
 
+/**
+ * Crea el contrato y, cuando la unidad pertenece a un conjunto que se arrienda
+ * en conjunto, incorpora automáticamente todas las unidades del conjunto al
+ * mismo contrato y arrendatario.
+ */
 export function useCreateContract() {
   const qc = useQueryClient();
   return useMutation({
@@ -509,13 +514,48 @@ export function useCreateContract() {
     }) => {
       const { data, error } = await supabase.from("contracts").insert(input).select().single();
       if (error) throw error;
-      return data;
+
+      const unitIds = await resolveUnitSet(input.unit_id);
+      const { error: linkError } = await supabase.from("contract_units").insert(
+        unitIds.map((id) => ({
+          contract_id: data.id,
+          unit_id: id,
+          is_primary: id === input.unit_id,
+        })),
+      );
+      if (linkError) throw linkError;
+
+      return { ...data, linked_unit_ids: unitIds };
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["contracts"] });
+      invalidateAllPropz(qc);
     },
   });
 }
+
+/** Devuelve la unidad y, si se arrienda en conjunto, todas las del conjunto. */
+async function resolveUnitSet(unitId: string): Promise<string[]> {
+  const { data: unit, error } = await supabase
+    .from("units")
+    .select("id, parent_unit_id, rental_mode")
+    .eq("id", unitId)
+    .maybeSingle();
+  if (error || !unit || unit.rental_mode === "independiente") return [unitId];
+
+  const rootId =
+    unit.rental_mode === "parte_de_conjunto" && unit.parent_unit_id
+      ? unit.parent_unit_id
+      : unit.id;
+
+  const { data: members } = await supabase
+    .from("units")
+    .select("id")
+    .eq("parent_unit_id", rootId)
+    .neq("status", "archivado");
+
+  return Array.from(new Set([rootId, unitId, ...(members ?? []).map((m) => m.id)]));
+}
+
 
 export function useUpdateContractStatus() {
   const qc = useQueryClient();
