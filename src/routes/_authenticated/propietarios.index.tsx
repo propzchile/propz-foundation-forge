@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -10,6 +10,7 @@ import {
   StatusBadge,
 } from "@/components/propz/app-shell";
 import { OwnerForm } from "@/components/propz/owner-form";
+import { DeleteAction } from "@/components/propz/delete-action";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -26,7 +27,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { useCreateOwner, useOwners } from "@/lib/propz/queries";
+import {
+  useCreateOwner,
+  useDeleteOwner,
+  useOwnerDependencies,
+  useOwners,
+  useSetOwnerArchived,
+  useUpdateOwner,
+} from "@/lib/propz/queries";
+import type { Owner } from "@/lib/propz/domain";
 import { useAppContext } from "@/lib/propz/session";
 
 export const Route = createFileRoute("/_authenticated/propietarios/")({
@@ -53,10 +62,13 @@ export const Route = createFileRoute("/_authenticated/propietarios/")({
 type StatusFilter = "activos" | "archivados" | "todos";
 
 function OwnersPage() {
-  const owners = useOwners();
   const ctx = useAppContext();
+  const owners = useOwners();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("activos");
+
+  // Modo propietario: la gestión de múltiples propietarios no aplica.
+  if (!ctx.loading && !ctx.isAdmin) return <Navigate to="/panel" replace />;
 
   const term = search.trim().toLowerCase();
   const filtered = (owners.data ?? []).filter((o) => {
@@ -75,16 +87,9 @@ function OwnersPage() {
 
   return (
     <AppShell
-      title={ctx.isAdmin ? "Propietarios / clientes" : "Propietarios de mi cartera"}
-      description={
-        ctx.isAdmin
-          ? "Solo se muestran los propietarios que administras."
-          : "Solo se muestran las fichas de propietario asociadas a tu cuenta."
-      }
-      crumbs={[
-        { label: ctx.isAdmin ? "Mi administración" : "Mi cartera", to: "/panel" },
-        { label: "Propietarios" },
-      ]}
+      title="Propietarios / clientes"
+      description="Solo se muestran los propietarios que administras."
+      crumbs={[{ label: "Mi administración", to: "/panel" }, { label: "Propietarios" }]}
       actions={<NewOwnerDialog />}
     >
       <div className="mb-4 flex flex-wrap items-center gap-3">
@@ -93,10 +98,10 @@ function OwnersPage() {
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Buscar por nombre, razón social o RUT"
           aria-label="Buscar propietarios"
-          className="max-w-sm"
+          className="w-full sm:max-w-sm"
         />
         <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
-          <SelectTrigger className="w-44" aria-label="Filtrar por estado">
+          <SelectTrigger className="w-full sm:w-44" aria-label="Filtrar por estado">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -124,56 +129,134 @@ function OwnersPage() {
           hint="Prueba con otro nombre o RUT, o cambia el filtro de estado."
         />
       ) : (
-        <div className="overflow-hidden rounded-lg border">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/60 text-left text-xs uppercase text-muted-foreground">
-              <tr>
-                <th className="px-4 py-3">Nombre</th>
-                <th className="px-4 py-3">Tipo</th>
-                <th className="px-4 py-3">RUT</th>
-                <th className="px-4 py-3">Email</th>
-                <th className="px-4 py-3">Estado</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((o) => (
-                <tr key={o.id} className="border-t hover:bg-muted/40">
-                  <td className="px-4 py-3">
-                    <Link
-                      to="/propietarios/$ownerId"
-                      params={{ ownerId: o.id }}
-                      className="font-medium hover:underline"
-                    >
-                      {o.display_name}
-                    </Link>
-                    {o.is_demo && (
-                      <span className="ml-2 rounded bg-secondary px-1.5 py-0.5 text-[10px] uppercase text-secondary-foreground">
-                        demo
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    {o.party_type === "empresa" ? "Empresa" : "Persona natural"}
-                  </td>
-                  <td className="px-4 py-3">{o.tax_id ?? "—"}</td>
-                  <td className="px-4 py-3">{o.email ?? "—"}</td>
-                  <td className="px-4 py-3">
-                    <StatusBadge status={o.status} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="grid gap-3 md:grid-cols-2">
+          {filtered.map((o) => (
+            <OwnerCard key={o.id} owner={o} />
+          ))}
         </div>
       )}
     </AppShell>
   );
 }
 
+function DataRow({ label, value }: { label: string; value: string | null }) {
+  return (
+    <div className="flex justify-between gap-3 border-b py-1.5 last:border-b-0">
+      <span className="shrink-0 text-xs uppercase text-muted-foreground">{label}</span>
+      <span className="min-w-0 break-words text-right text-sm">{value || "—"}</span>
+    </div>
+  );
+}
+
+function OwnerCard({ owner }: { owner: Owner }) {
+  const [editOpen, setEditOpen] = useState(false);
+  const update = useUpdateOwner();
+  const setArchived = useSetOwnerArchived();
+  const del = useDeleteOwner();
+  const deps = useOwnerDependencies(owner.id);
+  const isArchived = owner.status === "archivado";
+
+  const blockedReason =
+    (deps.data?.total ?? 0) > 0
+      ? "Este propietario tiene propiedades, arrendatarios o contratos asociados. Archívalo en lugar de eliminarlo."
+      : null;
+
+  return (
+    <div className="surface-card p-4">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <Link
+          to="/propietarios/$ownerId"
+          params={{ ownerId: owner.id }}
+          className="font-medium hover:underline"
+        >
+          {owner.display_name}
+        </Link>
+        <StatusBadge status={owner.status} />
+      </div>
+
+      <div className="mt-3">
+        <DataRow
+          label="Tipo"
+          value={owner.party_type === "empresa" ? "Empresa" : "Persona natural"}
+        />
+        <DataRow label="Razón social" value={owner.legal_name} />
+        <DataRow label="RUT" value={owner.tax_id} />
+        <DataRow label="Email" value={owner.email} />
+        <DataRow label="Teléfono" value={owner.phone} />
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <Dialog open={editOpen} onOpenChange={setEditOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline" size="sm">
+              Editar
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Editar propietario</DialogTitle>
+            </DialogHeader>
+            <OwnerForm
+              mode="edit"
+              pending={update.isPending}
+              initialValues={{
+                display_name: owner.display_name,
+                party_type: owner.party_type,
+                legal_name: owner.legal_name,
+                tax_id: owner.tax_id,
+                email: owner.email,
+                phone: owner.phone,
+                notes: owner.notes,
+              }}
+              onSubmit={async (values) => {
+                try {
+                  await update.mutateAsync({ id: owner.id, ...values });
+                  toast.success("Cambios guardados");
+                  setEditOpen(false);
+                } catch (err) {
+                  toast.error((err as Error).message);
+                }
+              }}
+            />
+          </DialogContent>
+        </Dialog>
+
+        <Button
+          variant="secondary"
+          size="sm"
+          disabled={setArchived.isPending}
+          onClick={async () => {
+            try {
+              await setArchived.mutateAsync({ id: owner.id, archived: !isArchived });
+              toast.success(isArchived ? "Propietario reactivado" : "Propietario archivado");
+            } catch (err) {
+              toast.error((err as Error).message);
+            }
+          }}
+        >
+          {isArchived ? "Reactivar" : "Archivar"}
+        </Button>
+
+        <DeleteAction
+          entityLabel={`a ${owner.display_name}`}
+          blockedReason={blockedReason}
+          pending={del.isPending}
+          onConfirm={() => del.mutateAsync(owner.id)}
+        />
+
+        <Button asChild variant="ghost" size="sm" className="ml-auto">
+          <Link to="/propietarios/$ownerId" params={{ ownerId: owner.id }}>
+            Ver ficha
+          </Link>
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function NewOwnerDialog() {
   const [open, setOpen] = useState(false);
   const create = useCreateOwner();
-  const ctx = useAppContext();
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -189,7 +272,7 @@ function NewOwnerDialog() {
           pending={create.isPending}
           onSubmit={async (values) => {
             try {
-              await create.mutateAsync({ ...values, linkToSelf: !ctx.isAdmin });
+              await create.mutateAsync({ ...values, linkToSelf: false });
               toast.success("Propietario creado");
               setOpen(false);
             } catch (err) {
