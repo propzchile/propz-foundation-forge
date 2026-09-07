@@ -59,9 +59,14 @@ const NAV: NavGroup[] = [
   { items: [{ to: "/alertas", label: "Alertas", icon: Bell, soon: true }] },
 ];
 
-function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
+function SidebarNav({ onNavigate, isAdmin }: { onNavigate?: () => void; isAdmin?: boolean }) {
+  const groups = NAV.map((group) => ({
+    ...group,
+    items: group.items.filter((item) => (item.to === "/propietarios" ? isAdmin : true)),
+  })).filter((group) => group.items.length > 0);
   return (
     <nav className="space-y-6" aria-label="Navegación principal">
+
       {NAV.map((group, gi) => (
         <div key={group.title ?? `g-${gi}`}>
           {group.title && (
