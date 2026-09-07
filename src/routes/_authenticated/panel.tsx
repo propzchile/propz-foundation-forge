@@ -246,8 +246,12 @@ function OperationalPanel() {
           {/* KPIs */}
           <section aria-label="Indicadores principales">
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {ctx.isAdmin && (
+                <KpiCard icon={Users} label="Propietarios" value={owners.data?.length ?? 0} />
+              )}
               <KpiCard icon={Building2} label="Propiedades" value={activeProperties.length} />
               <KpiCard icon={Home} label="Unidades" value={totalUnits} />
+              <KpiCard icon={FileText} label="Contratos activos" value={activeContracts.length} />
               <KpiCard
                 icon={KeyRound}
                 label="Ocupación"
@@ -255,9 +259,8 @@ function OperationalPanel() {
                 hint={totalUnits > 0 ? `${occupied} de ${totalUnits} unidades` : "Sin unidades"}
               />
               <KpiCard icon={DoorOpen} label="Disponibles" value={available} />
-              <KpiCard icon={Users} label="Propietarios" value={owners.data?.length ?? 0} />
-              <KpiCard icon={FileText} label="Contratos activos" value={activeContracts.length} />
             </div>
+
           </section>
 
           {/* Ocupación + resumen */}
