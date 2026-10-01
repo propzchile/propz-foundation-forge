@@ -28,7 +28,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { titleCase } from "@/lib/propz/domain";
-import { useCreateProperty, useDeleteProperty, useOwners, useProperties } from "@/lib/propz/queries";
+import { useCreateProperty, useDeleteProperty, useMyOwner, useOwners, useProperties } from "@/lib/propz/queries";
+import { useAppContext } from "@/lib/propz/session";
 
 export const Route = createFileRoute("/_authenticated/propiedades/")({
   head: () => ({
