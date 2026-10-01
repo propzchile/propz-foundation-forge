@@ -69,6 +69,14 @@ export function UnitForm({ mode, initialValues, parentOptions = [], pending, onS
         if (pending) return;
         const identifier = form.identifier.trim();
         if (identifier.length < 1) return setError("Escribe un identificador (ej: 802, E-45).");
+        if (form.rental_mode === "parte_de_conjunto") {
+          if (parentOptions.length === 0)
+            return setError(
+              "No hay una unidad principal disponible. Primero crea una unidad con modo «Se arrienda en conjunto».",
+            );
+          if (form.parent_unit_id === NONE)
+            return setError("Selecciona la unidad principal de la que forma parte.");
+        }
         setError(null);
         await onSubmit({
           identifier,
@@ -138,27 +146,35 @@ export function UnitForm({ mode, initialValues, parentOptions = [], pending, onS
         </Select>
       </div>
 
-      {showParent && (
-        <div className="space-y-2">
-          <Label>Forma parte de</Label>
-          <Select
-            value={form.parent_unit_id}
-            onValueChange={(v) => setForm({ ...form, parent_unit_id: v })}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Selecciona la unidad principal" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={NONE}>Sin unidad principal</SelectItem>
-              {parentOptions.map((o) => (
-                <SelectItem key={o.id} value={o.id}>
-                  {o.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
+      {form.rental_mode === "parte_de_conjunto" &&
+        (parentOptions.length === 0 ? (
+          <p className="rounded-md border border-dashed p-3 text-sm text-muted-foreground">
+            No hay una unidad principal disponible en esta propiedad. Primero crea una unidad con
+            modo «Se arrienda en conjunto» (ej: Depto 703) y luego vincula esta unidad a ella.
+          </p>
+        ) : (
+          <div className="space-y-2">
+            <Label>Unidad principal del conjunto</Label>
+            <Select
+              value={form.parent_unit_id}
+              onValueChange={(v) => setForm({ ...form, parent_unit_id: v })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecciona la unidad principal" />
+              </SelectTrigger>
+              <SelectContent>
+                {parentOptions.map((o) => (
+                  <SelectItem key={o.id} value={o.id}>
+                    {o.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Esta unidad se arrendará siempre junto con la unidad principal seleccionada.
+            </p>
+          </div>
+        ))}
 
       {error && <p className="text-sm text-destructive">{error}</p>}
 
