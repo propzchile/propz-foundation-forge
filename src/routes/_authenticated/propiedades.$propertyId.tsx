@@ -212,6 +212,23 @@ function PropertyDetail() {
                 {titleCase(u.unit_type)} · {u.identifier} ·{" "}
                 {RENTAL_MODES.find((m) => m.value === u.rental_mode)?.label ?? u.rental_mode}
               </p>
+              {u.rental_mode === "parte_de_conjunto" && (
+                <p className="mt-2 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
+                  {u.parent_unit_id
+                    ? `Se arrienda junto con ${parentMap.get(u.parent_unit_id) ?? "su unidad principal"}`
+                    : "Sin unidad principal asignada — edítala para vincularla a un conjunto"}
+                </p>
+              )}
+              {u.rental_mode === "conjunta" &&
+                (childrenMap.get(u.id)?.length ? (
+                  <p className="mt-2 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
+                    Conjunto con: {childrenMap.get(u.id)!.join(", ")}
+                  </p>
+                ) : (
+                  <p className="mt-2 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
+                    Conjunto sin unidades vinculadas
+                  </p>
+                ))}
               <div className="mt-3">
                 <UnitActions unit={u} parentOptions={parentOptions} />
               </div>
