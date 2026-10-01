@@ -448,14 +448,39 @@ export function useCreateTenant() {
 
 /* --------------------------------- CONTRACTS ------------------------------- */
 
+export type ContractUnitLink = {
+  unit_id: string;
+  is_primary: boolean;
+  units: Pick<Unit, "id" | "identifier" | "alias" | "unit_type"> | null;
+};
+
 export type ContractWithRelations = Contract & {
   tenants: Pick<Tenant, "id" | "first_name" | "last_name"> | null;
   units: Pick<Unit, "id" | "identifier" | "alias" | "unit_type"> | null;
   properties: Pick<Property, "id" | "alias"> | null;
+  contract_units: ContractUnitLink[];
 };
 
 const CONTRACT_SELECT =
-  "*, tenants(id, first_name, last_name), units(id, identifier, alias, unit_type), properties(id, alias)";
+  "*, tenants(id, first_name, last_name), units!contracts_unit_id_fkey(id, identifier, alias, unit_type), properties(id, alias), contract_units(unit_id, is_primary, units(id, identifier, alias, unit_type))";
+
+/** Compatibilidad: contratos antiguos sin filas en contract_units usan contracts.unit_id. */
+function normalizeContract(row: ContractWithRelations): ContractWithRelations {
+  const links = row.contract_units ?? [];
+  if (links.length > 0) return row;
+  return {
+    ...row,
+    contract_units: [{ unit_id: row.unit_id, is_primary: true, units: row.units }],
+  };
+}
+
+/** IDs de todas las unidades del contrato (primaria primero). */
+export function contractUnitIds(c: ContractWithRelations): string[] {
+  const ids = [...(c.contract_units ?? [])]
+    .sort((a, b) => Number(b.is_primary) - Number(a.is_primary))
+    .map((l) => l.unit_id);
+  return ids.length ? ids : [c.unit_id];
+}
 
 export function useContracts(filter: { ownerId?: string; propertyId?: string; unitId?: string }) {
   const { ownerId, propertyId, unitId } = filter;
@@ -468,10 +493,20 @@ export function useContracts(filter: { ownerId?: string; propertyId?: string; un
         .order("start_date", { ascending: false });
       if (ownerId) q = q.eq("owner_id", ownerId);
       if (propertyId) q = q.eq("property_id", propertyId);
-      if (unitId) q = q.eq("unit_id", unitId);
+      if (unitId) {
+        // Incluye contratos donde la unidad es primaria o está vinculada vía contract_units.
+        const { data: links } = await supabase
+          .from("contract_units")
+          .select("contract_id")
+          .eq("unit_id", unitId);
+        const ids = (links ?? []).map((l) => l.contract_id);
+        q = ids.length
+          ? q.or(`unit_id.eq.${unitId},id.in.(${ids.join(",")})`)
+          : q.eq("unit_id", unitId);
+      }
       const { data, error } = await q;
       if (error) throw error;
-      return (data ?? []) as unknown as ContractWithRelations[];
+      return ((data ?? []) as unknown as ContractWithRelations[]).map(normalizeContract);
     },
   });
 }
@@ -512,20 +547,25 @@ export function useCreateContract() {
       periodicity: Contract["periodicity"];
       due_day: number;
     }) => {
-      const { data, error } = await supabase.from("contracts").insert(input).select().single();
+      const unitIds = await resolveUnitSet(input.unit_id);
+      // Operación transaccional: contrato + contract_units se crean juntos o nada.
+      const { data: id, error } = await supabase.rpc("create_contract_with_units" as never, {
+        _owner_id: input.owner_id,
+        _property_id: input.property_id,
+        _unit_id: input.unit_id,
+        _tenant_id: input.tenant_id,
+        _start_date: input.start_date,
+        _end_date: input.end_date ?? null,
+        _status: input.status,
+        _rent_amount: input.rent_amount,
+        _currency: input.currency,
+        _periodicity: input.periodicity,
+        _due_day: input.due_day,
+        _unit_ids: unitIds,
+      } as never);
       if (error) throw error;
 
-      const unitIds = await resolveUnitSet(input.unit_id);
-      const { error: linkError } = await supabase.from("contract_units").insert(
-        unitIds.map((id) => ({
-          contract_id: data.id,
-          unit_id: id,
-          is_primary: id === input.unit_id,
-        })),
-      );
-      if (linkError) throw linkError;
-
-      return { ...data, linked_unit_ids: unitIds };
+      return { id: id as unknown as string, linked_unit_ids: unitIds };
     },
     onSuccess: () => {
       invalidateAllPropz(qc);
