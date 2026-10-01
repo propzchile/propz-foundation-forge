@@ -86,8 +86,24 @@ function PropertyDetail() {
   }, [units.data, showArchivedUnits]);
 
   const parentOptions = (units.data ?? [])
-    .filter((u) => u.rental_mode !== "parte_de_conjunto")
+    .filter((u) => u.rental_mode === "conjunta" && u.status !== "archivado")
     .map((u) => ({ id: u.id, label: u.alias || u.identifier }));
+
+  const parentMap = useMemo(
+    () => new Map((units.data ?? []).map((u) => [u.id, u.alias || u.identifier])),
+    [units.data],
+  );
+  const childrenMap = useMemo(() => {
+    const map = new Map<string, string[]>();
+    for (const u of units.data ?? []) {
+      if (u.parent_unit_id) {
+        const list = map.get(u.parent_unit_id) ?? [];
+        list.push(u.alias || u.identifier);
+        map.set(u.parent_unit_id, list);
+      }
+    }
+    return map;
+  }, [units.data]);
 
   if (property.isLoading || property.isError || !property.data) {
     return (
