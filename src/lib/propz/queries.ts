@@ -521,7 +521,7 @@ export function useContract(contractId: string) {
         .eq("id", contractId)
         .maybeSingle();
       if (error) throw error;
-      return data as unknown as ContractWithRelations | null;
+      return data ? normalizeContract(data as unknown as ContractWithRelations) : null;
     },
   });
 }
