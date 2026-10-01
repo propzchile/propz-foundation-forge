@@ -509,6 +509,23 @@ export type Database = {
     Functions: {
       can_access_owner: { Args: { _owner_id: string }; Returns: boolean }
       can_access_property: { Args: { _property_id: string }; Returns: boolean }
+      create_contract_with_units: {
+        Args: {
+          _currency: string
+          _due_day: number
+          _end_date: string
+          _owner_id: string
+          _periodicity: Database["public"]["Enums"]["contract_periodicity"]
+          _property_id: string
+          _rent_amount: number
+          _start_date: string
+          _status: Database["public"]["Enums"]["contract_status"]
+          _tenant_id: string
+          _unit_id: string
+          _unit_ids: string[]
+        }
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
