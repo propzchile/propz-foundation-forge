@@ -30,9 +30,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { OccupancyBadge } from "@/components/propz/occupancy-badge";
 import { PropertyForm } from "@/components/propz/property-form";
 import { UnitForm } from "@/components/propz/unit-form";
+import { NewContractDialog } from "@/routes/_authenticated/unidades.$unitId";
 import {
+  contractUnitIds,
+  useContracts,
   useCreateUnit,
   useOwner,
   useProperty,
@@ -78,7 +82,18 @@ function PropertyDetail() {
   const property = useProperty(propertyId);
   const owner = useOwner(property.data?.owner_id ?? "");
   const units = useUnits(propertyId);
+  const contracts = useContracts({ propertyId });
   const [showArchivedUnits, setShowArchivedUnits] = useState(false);
+
+  const occupiedUnitIds = useMemo(
+    () =>
+      new Set(
+        (contracts.data ?? [])
+          .filter((c) => c.status === "ACTIVO")
+          .flatMap((c) => contractUnitIds(c)),
+      ),
+    [contracts.data],
+  );
 
   const visibleUnits = useMemo(() => {
     const all = units.data ?? [];
@@ -208,6 +223,9 @@ function PropertyDetail() {
                 </Link>
                 <StatusBadge status={u.status} />
               </div>
+              <div className="mt-2">
+                <OccupancyBadge occupied={occupiedUnitIds.has(u.id)} />
+              </div>
               <p className="mt-1 text-xs text-muted-foreground">
                 {titleCase(u.unit_type)} · {u.identifier} ·{" "}
                 {RENTAL_MODES.find((m) => m.value === u.rental_mode)?.label ?? u.rental_mode}
@@ -229,8 +247,16 @@ function PropertyDetail() {
                     Conjunto sin unidades vinculadas
                   </p>
                 ))}
-              <div className="mt-3">
+              <div className="mt-3 flex flex-wrap items-center gap-2">
                 <UnitActions unit={u} parentOptions={parentOptions} />
+                {!occupiedUnitIds.has(u.id) && u.status !== "archivado" && (
+                  <NewContractDialog
+                    ownerId={p.owner_id}
+                    propertyId={propertyId}
+                    unitId={u.id}
+                    label="Crear contrato"
+                  />
+                )}
               </div>
             </div>
           ))}

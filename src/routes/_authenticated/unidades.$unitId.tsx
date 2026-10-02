@@ -172,14 +172,16 @@ function ContractRow({
   );
 }
 
-function NewContractDialog({
+export function NewContractDialog({
   ownerId,
   propertyId,
   unitId,
+  label = "Nuevo contrato",
 }: {
   ownerId: string;
   propertyId: string;
   unitId: string;
+  label?: string;
 }) {
   const [open, setOpen] = useState(false);
   const create = useCreateContract();
@@ -198,7 +200,7 @@ function NewContractDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>Nuevo contrato</Button>
+        <Button>{label}</Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
