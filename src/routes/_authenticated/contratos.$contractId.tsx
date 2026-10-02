@@ -9,7 +9,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useContract, useOwner, useUpdateContractStatus } from "@/lib/propz/queries";
+import {
+  useContract,
+  useOwner,
+  useUpdateContractStatus,
+  type ContractWithRelations,
+} from "@/lib/propz/queries";
 import {
   CONTRACT_STATUSES,
   formatDate,
@@ -47,6 +52,17 @@ function Field({ label, value }: { label: string; value: string }) {
       <div className="mt-1 font-medium">{value}</div>
     </div>
   );
+}
+
+/** "D.703 (principal) + B1" a partir de contract_units. */
+function unitsLabel(contract: ContractWithRelations) {
+  const sorted = [...(contract.contract_units ?? [])].sort(
+    (a, b) => Number(b.is_primary) - Number(a.is_primary),
+  );
+  if (sorted.length === 0) return contract.units?.identifier ?? "—";
+  return sorted
+    .map((l) => (l.units?.alias || l.units?.identifier || "Unidad") + (l.is_primary ? " (principal)" : ""))
+    .join(" + ");
 }
 
 function ContractDetail() {
@@ -121,7 +137,7 @@ function ContractDetail() {
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <Field label="Arrendatario" value={c.tenants ? tenantName(c.tenants) : "—"} />
           <Field label="Propiedad" value={c.properties?.alias ?? "—"} />
-          <Field label="Unidad" value={c.units?.identifier ?? "—"} />
+          <Field label="Unidades" value={unitsLabel(c)} />
           <Field label="Inicio" value={formatDate(c.start_date)} />
           <Field label="Término" value={formatDate(c.end_date)} />
           <Field label="Renta" value={formatMoney(c.rent_amount, c.currency)} />
