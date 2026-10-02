@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { CONTRACT_STATUSES, formatDate, formatMoney, tenantName } from "@/lib/propz/domain";
-import { useContracts, useDeleteContract } from "@/lib/propz/queries";
+import { useContracts, useDeleteContract, type ContractWithRelations } from "@/lib/propz/queries";
 
 export const Route = createFileRoute("/_authenticated/contratos/")({
   head: () => ({
