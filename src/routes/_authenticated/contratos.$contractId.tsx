@@ -9,7 +9,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useContract, useOwner, useUpdateContractStatus } from "@/lib/propz/queries";
+import {
+  useContract,
+  useOwner,
+  useUpdateContractStatus,
+  contractUnitIds,
+  type ContractWithRelations,
+} from "@/lib/propz/queries";
 import {
   CONTRACT_STATUSES,
   formatDate,
