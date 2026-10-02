@@ -40,6 +40,17 @@ export const Route = createFileRoute("/_authenticated/contratos/")({
   component: ContractsListPage,
 });
 
+/** "D.703 (principal) + B1" a partir de contract_units. */
+function unitsLabel(c: ContractWithRelations) {
+  const sorted = [...(c.contract_units ?? [])].sort(
+    (a, b) => Number(b.is_primary) - Number(a.is_primary),
+  );
+  if (sorted.length === 0) return c.units?.identifier ?? "—";
+  return sorted
+    .map((l) => (l.units?.alias || l.units?.identifier || "Unidad") + (l.is_primary ? " (principal)" : ""))
+    .join(" + ");
+}
+
 function ContractsListPage() {
   const contracts = useContracts({});
   const del = useDeleteContract();
