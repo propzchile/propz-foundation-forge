@@ -138,7 +138,7 @@ function ContractDetail() {
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <Field label="Arrendatario" value={c.tenants ? tenantName(c.tenants) : "—"} />
           <Field label="Propiedad" value={c.properties?.alias ?? "—"} />
-          <Field label="Unidad" value={c.units?.identifier ?? "—"} />
+          <Field label="Unidades" value={unitsLabel(c)} />
           <Field label="Inicio" value={formatDate(c.start_date)} />
           <Field label="Término" value={formatDate(c.end_date)} />
           <Field label="Renta" value={formatMoney(c.rent_amount, c.currency)} />
