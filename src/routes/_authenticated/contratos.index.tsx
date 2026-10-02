@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { CONTRACT_STATUSES, formatDate, formatMoney, tenantName } from "@/lib/propz/domain";
-import { useContracts, useDeleteContract } from "@/lib/propz/queries";
+import { useContracts, useDeleteContract, type ContractWithRelations } from "@/lib/propz/queries";
 
 export const Route = createFileRoute("/_authenticated/contratos/")({
   head: () => ({
@@ -39,6 +39,17 @@ export const Route = createFileRoute("/_authenticated/contratos/")({
   }),
   component: ContractsListPage,
 });
+
+/** "D.703 (principal) + B1" a partir de contract_units. */
+function unitsLabel(c: ContractWithRelations) {
+  const sorted = [...(c.contract_units ?? [])].sort(
+    (a, b) => Number(b.is_primary) - Number(a.is_primary),
+  );
+  if (sorted.length === 0) return c.units?.identifier ?? "—";
+  return sorted
+    .map((l) => (l.units?.alias || l.units?.identifier || "Unidad") + (l.is_primary ? " (principal)" : ""))
+    .join(" + ");
+}
 
 function ContractsListPage() {
   const contracts = useContracts({});
@@ -113,8 +124,7 @@ function ContractsListPage() {
                   <StatusBadge status={c.status} />
                 </div>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {c.properties?.alias ?? "—"} · Unidad{" "}
-                  {c.units?.alias || c.units?.identifier || "—"}
+                  {c.properties?.alias ?? "—"} · {unitsLabel(c)}
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
                   {formatMoney(c.rent_amount, c.currency)} · {formatDate(c.start_date)} →{" "}
