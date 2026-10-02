@@ -223,6 +223,9 @@ function PropertyDetail() {
                 </Link>
                 <StatusBadge status={u.status} />
               </div>
+              <div className="mt-2">
+                <OccupancyBadge occupied={occupiedUnitIds.has(u.id)} />
+              </div>
               <p className="mt-1 text-xs text-muted-foreground">
                 {titleCase(u.unit_type)} · {u.identifier} ·{" "}
                 {RENTAL_MODES.find((m) => m.value === u.rental_mode)?.label ?? u.rental_mode}
@@ -244,8 +247,16 @@ function PropertyDetail() {
                     Conjunto sin unidades vinculadas
                   </p>
                 ))}
-              <div className="mt-3">
+              <div className="mt-3 flex flex-wrap items-center gap-2">
                 <UnitActions unit={u} parentOptions={parentOptions} />
+                {!occupiedUnitIds.has(u.id) && u.status !== "archivado" && (
+                  <NewContractDialog
+                    ownerId={p.owner_id}
+                    propertyId={propertyId}
+                    unitId={u.id}
+                    label="Crear contrato"
+                  />
+                )}
               </div>
             </div>
           ))}
