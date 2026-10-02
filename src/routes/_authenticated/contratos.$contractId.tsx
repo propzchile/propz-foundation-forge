@@ -13,7 +13,6 @@ import {
   useContract,
   useOwner,
   useUpdateContractStatus,
-  contractUnitIds,
   type ContractWithRelations,
 } from "@/lib/propz/queries";
 import {
