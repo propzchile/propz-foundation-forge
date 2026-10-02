@@ -55,6 +55,17 @@ function Field({ label, value }: { label: string; value: string }) {
   );
 }
 
+/** "D.703 (principal) + B1" a partir de contract_units. */
+function unitsLabel(contract: ContractWithRelations) {
+  const sorted = [...(contract.contract_units ?? [])].sort(
+    (a, b) => Number(b.is_primary) - Number(a.is_primary),
+  );
+  if (sorted.length === 0) return contract.units?.identifier ?? "—";
+  return sorted
+    .map((l) => (l.units?.alias || l.units?.identifier || "Unidad") + (l.is_primary ? " (principal)" : ""))
+    .join(" + ");
+}
+
 function ContractDetail() {
   const { contractId } = Route.useParams();
   const contract = useContract(contractId);
