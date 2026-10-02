@@ -124,8 +124,7 @@ function ContractsListPage() {
                   <StatusBadge status={c.status} />
                 </div>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {c.properties?.alias ?? "—"} · Unidad{" "}
-                  {c.units?.alias || c.units?.identifier || "—"}
+                  {c.properties?.alias ?? "—"} · {unitsLabel(c)}
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
                   {formatMoney(c.rent_amount, c.currency)} · {formatDate(c.start_date)} →{" "}
