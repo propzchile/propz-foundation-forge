@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAppContext } from "@/lib/propz/session";
 import {
+  contractUnitIds,
   useAllUnits,
   useContracts,
   useOwners,
@@ -200,9 +201,7 @@ function OperationalPanel() {
 
   const activeUnits = (units.data ?? []).filter((u) => u.status !== "archivado");
   const activeContracts = (contracts.data ?? []).filter((c) => c.status === "ACTIVO");
-  const occupiedUnitIds = new Set(
-    activeContracts.map((c) => c.unit_id).filter((id): id is string => Boolean(id)),
-  );
+  const occupiedUnitIds = new Set(activeContracts.flatMap((c) => contractUnitIds(c)));
 
   const totalUnits = activeUnits.length;
   const occupied = activeUnits.filter((u) => occupiedUnitIds.has(u.id)).length;

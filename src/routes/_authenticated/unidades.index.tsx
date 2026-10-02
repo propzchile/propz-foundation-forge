@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { titleCase } from "@/lib/propz/domain";
-import { useAllUnits, useContracts, useDeleteUnit } from "@/lib/propz/queries";
+import { contractUnitIds, useAllUnits, useContracts, useDeleteUnit } from "@/lib/propz/queries";
 
 export const Route = createFileRoute("/_authenticated/unidades/")({
   head: () => ({
@@ -48,7 +48,9 @@ function UnitsListPage() {
   const [status, setStatus] = useState("activo");
 
   const occupied = new Set(
-    (contracts.data ?? []).filter((c) => c.status === "ACTIVO").map((c) => c.unit_id),
+    (contracts.data ?? [])
+      .filter((c) => c.status === "ACTIVO")
+      .flatMap((c) => contractUnitIds(c)),
   );
 
   const rows = (units.data ?? []).filter((u) => {
