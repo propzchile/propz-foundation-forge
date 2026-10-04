@@ -237,8 +237,8 @@ export function NewContractDialog({
             const targetProperty = propertyId ?? selectedProperty;
             const targetUnit = unitId ?? selectedUnit;
             if (!selectedOwnerId || !targetProperty || !targetUnit ||
-                !validProperties.some((p) => p.id === targetProperty) ||
-                !availableUnits.some((u) => u.id === targetUnit)) {
+                (!propertyId && !validProperties.some((p) => p.id === targetProperty)) ||
+                (!unitId && !availableUnits.some((u) => u.id === targetUnit))) {
               toast.error("Selecciona una propiedad y una unidad disponible");
               return;
             }

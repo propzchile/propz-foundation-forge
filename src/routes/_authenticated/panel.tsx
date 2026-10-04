@@ -360,19 +360,17 @@ function OperationalPanel() {
           {/* Alertas */}
           <section aria-label="Alertas">
             <h2 className="mb-3 text-lg font-semibold">Alertas</h2>
-            <Card>
-              <CardContent className="flex flex-wrap items-center justify-between gap-3 pt-6">
+            <Link to="/alertas" className="surface-card block p-5 transition-colors hover:border-accent focus-visible:outline-2 focus-visible:outline-accent">
+              <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <span className="grid size-9 place-items-center rounded-lg bg-secondary text-secondary-foreground">
                     <Bell className="size-4" />
                   </span>
                   <p className="text-sm text-muted-foreground">Sin alertas pendientes</p>
                 </div>
-                <Button asChild variant="ghost" size="sm">
-                  <Link to="/alertas">Ir a alertas</Link>
-                </Button>
-              </CardContent>
-            </Card>
+                <span className="text-sm font-medium">Ir a alertas →</span>
+              </div>
+            </Link>
           </section>
         </div>
       )}

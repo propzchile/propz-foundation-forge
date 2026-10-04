@@ -21,7 +21,7 @@ function TenantDetail() {
   const tenants = useTenants();
   const tenant = tenants.data?.find((t) => t.id === tenantId);
   const owner = useOwner(tenant?.owner_id ?? "");
-  const contracts = useContracts({ ownerId: tenant?.owner_id });
+  const contracts = useContracts(tenant ? { ownerId: tenant.owner_id } : {});
   const linked = (contracts.data ?? []).filter((c) => c.tenant_id === tenantId);
 
   return (
