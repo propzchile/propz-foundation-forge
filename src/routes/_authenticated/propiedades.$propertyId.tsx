@@ -212,7 +212,7 @@ function PropertyDetail() {
       ) : (
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
           {visibleUnits.map((u) => (
-            <div key={u.id} className="surface-card p-4">
+            <div key={u.id} className="surface-card flex h-full min-h-64 flex-col p-4">
               <div className="flex items-center justify-between gap-2">
                 <Link
                   to="/unidades/$unitId"
@@ -247,7 +247,7 @@ function PropertyDetail() {
                     Conjunto sin unidades vinculadas
                   </p>
                 ))}
-              <div className="mt-3 flex flex-wrap items-center gap-2">
+              <div className="mt-auto flex min-h-10 flex-wrap items-center gap-2 pt-4">
                 <UnitActions unit={u} parentOptions={parentOptions} />
                 {!occupiedUnitIds.has(u.id) && u.status !== "archivado" && (
                   <NewContractDialog

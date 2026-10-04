@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -182,7 +182,7 @@ function TenantsListPage() {
         <div className="grid gap-3 md:grid-cols-2">
           {rows.map((t) => (
             <div key={t.id} className="surface-card flex items-start justify-between gap-3 p-4">
-              <div className="min-w-0">
+              <Link to="/arrendatarios/$tenantId" params={{ tenantId: t.id }} className="min-w-0 flex-1 hover:underline focus-visible:outline-2 focus-visible:outline-accent">
                 <div className="flex items-center gap-2">
                   <span className="font-medium">{tenantName(t)}</span>
                   <StatusBadge status={t.status} />
@@ -193,7 +193,7 @@ function TenantsListPage() {
                 <p className="mt-1 text-xs text-muted-foreground">
                   Propietario: {ownerName.get(t.owner_id) ?? "—"}
                 </p>
-              </div>
+              </Link>
               <DeleteAction
                 entityLabel="el arrendatario"
                 pending={del.isPending}

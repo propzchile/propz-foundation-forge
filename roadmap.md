@@ -1,0 +1,5 @@
+- [x] Simplificar y enlazar indicadores, gráfico, acciones y disponibilidad en Panel.
+- [x] Mostrar ficha y contratos al abrir un arrendatario.
+- [x] Estabilizar altura de tarjetas de unidades en propiedad.
+- [x] Ofrecer nuevo contrato en Panel y Contratos reutilizando el diálogo existente.
+- [ ] Verificar navegación y creación con vista previa. Bloqueado: no hay sesión de la cuenta solicitante y las pantallas requieren iniciar sesión.

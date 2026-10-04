@@ -22,10 +22,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  contractUnitIds,
   useContracts,
   useCreateContract,
+  useAllUnits,
   useOwner,
+  useOwners,
   useProperty,
+  useProperties,
   useTenants,
   useUnit,
 } from "@/lib/propz/queries";
@@ -178,14 +182,20 @@ export function NewContractDialog({
   unitId,
   label = "Nuevo contrato",
 }: {
-  ownerId: string;
-  propertyId: string;
-  unitId: string;
+  ownerId?: string;
+  propertyId?: string;
+  unitId?: string;
   label?: string;
 }) {
   const [open, setOpen] = useState(false);
   const create = useCreateContract();
-  const tenants = useTenants(ownerId);
+  const owners = useOwners();
+  const properties = useProperties();
+  const units = useAllUnits();
+  const contracts = useContracts({});
+  const tenants = useTenants();
+  const [selectedProperty, setSelectedProperty] = useState(propertyId ?? "");
+  const [selectedUnit, setSelectedUnit] = useState(unitId ?? "");
   const [form, setForm] = useState({
     tenant_id: "",
     start_date: new Date().toISOString().slice(0, 10),
@@ -196,6 +206,16 @@ export function NewContractDialog({
     periodicity: "mensual" as ContractPeriodicity,
     due_day: "5",
   });
+  const selectedTenant = tenants.data?.find((t) => t.id === form.tenant_id);
+  const selectedOwnerId = ownerId ?? selectedTenant?.owner_id;
+  const validProperties = (properties.data ?? []).filter(
+    (p) => p.owner_id === selectedOwnerId && p.status !== "archivado" &&
+      (owners.data ?? []).some((o) => o.id === p.owner_id && o.status !== "archivado"),
+  );
+  const occupiedIds = new Set((contracts.data ?? []).filter((c) => c.status === "ACTIVO").flatMap((c) => contractUnitIds(c)));
+  const availableUnits = (units.data ?? []).filter((u) =>
+    u.property_id === selectedProperty && u.status !== "archivado" && !occupiedIds.has(u.id),
+  );
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -214,11 +234,19 @@ export function NewContractDialog({
               toast.error("Selecciona un arrendatario");
               return;
             }
+            const targetProperty = propertyId ?? selectedProperty;
+            const targetUnit = unitId ?? selectedUnit;
+            if (!selectedOwnerId || !targetProperty || !targetUnit ||
+                (!propertyId && !validProperties.some((p) => p.id === targetProperty)) ||
+                (!unitId && !availableUnits.some((u) => u.id === targetUnit))) {
+              toast.error("Selecciona una propiedad y una unidad disponible");
+              return;
+            }
             try {
               const created = await create.mutateAsync({
-                owner_id: ownerId,
-                property_id: propertyId,
-                unit_id: unitId,
+                owner_id: selectedOwnerId,
+                property_id: targetProperty,
+                unit_id: targetUnit,
                 tenant_id: form.tenant_id,
                 start_date: form.start_date,
                 end_date: form.end_date || null,
@@ -245,13 +273,16 @@ export function NewContractDialog({
             <Label>Arrendatario</Label>
             <Select
               value={form.tenant_id}
-              onValueChange={(v) => setForm({ ...form, tenant_id: v })}
+              onValueChange={(v) => {
+                setForm({ ...form, tenant_id: v });
+                if (!ownerId) { setSelectedProperty(""); setSelectedUnit(""); }
+              }}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Selecciona…" />
               </SelectTrigger>
               <SelectContent>
-                {(tenants.data ?? []).map((t) => (
+                {(tenants.data ?? []).filter((t) => t.status !== "archivado" && (!ownerId || t.owner_id === ownerId) && (owners.data ?? []).some((o) => o.id === t.owner_id && o.status !== "archivado")).map((t) => (
                   <SelectItem key={t.id} value={t.id}>
                     {tenantName(t)}
                   </SelectItem>
@@ -262,6 +293,24 @@ export function NewContractDialog({
               Los arrendatarios se crean en la ficha del propietario.
             </p>
           </div>
+          {!propertyId && (
+            <div className="space-y-2">
+              <Label>Propiedad</Label>
+              <Select value={selectedProperty} onValueChange={(v) => { setSelectedProperty(v); setSelectedUnit(""); }} disabled={!form.tenant_id}>
+                <SelectTrigger><SelectValue placeholder="Selecciona una propiedad" /></SelectTrigger>
+                <SelectContent>{validProperties.map((p) => <SelectItem key={p.id} value={p.id}>{p.alias}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+          )}
+          {!unitId && (
+            <div className="space-y-2">
+              <Label>Unidad disponible</Label>
+              <Select value={selectedUnit} onValueChange={setSelectedUnit} disabled={!selectedProperty}>
+                <SelectTrigger><SelectValue placeholder="Selecciona una unidad" /></SelectTrigger>
+                <SelectContent>{availableUnits.map((u) => <SelectItem key={u.id} value={u.id}>{u.alias || u.identifier}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label>Inicio</Label>

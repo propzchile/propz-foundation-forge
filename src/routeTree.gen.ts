@@ -17,6 +17,7 @@ import { Route as AuthenticatedCartolasRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedPagosRouteImport } from './routes/_authenticated/pagos'
 import { Route as AuthenticatedPanelRouteImport } from './routes/_authenticated/panel'
 import { Route as AuthenticatedArrendatariosIndexRouteImport } from './routes/_authenticated/arrendatarios.index'
+import { Route as AuthenticatedArrendatariosTenantIdRouteImport } from './routes/_authenticated/arrendatarios.$tenantId'
 import { Route as AuthenticatedContratosIndexRouteImport } from './routes/_authenticated/contratos.index'
 import { Route as AuthenticatedContratosContractIdRouteImport } from './routes/_authenticated/contratos.$contractId'
 import { Route as AuthenticatedPropiedadesIndexRouteImport } from './routes/_authenticated/propiedades.index'
@@ -64,6 +65,12 @@ const AuthenticatedArrendatariosIndexRoute =
   AuthenticatedArrendatariosIndexRouteImport.update({
     id: '/arrendatarios/',
     path: '/arrendatarios/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedArrendatariosTenantIdRoute =
+  AuthenticatedArrendatariosTenantIdRouteImport.update({
+    id: '/arrendatarios/$tenantId',
+    path: '/arrendatarios/$tenantId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedContratosIndexRoute =
@@ -122,6 +129,7 @@ export interface FileRoutesByFullPath {
   '/cartolas': typeof AuthenticatedCartolasRoute
   '/pagos': typeof AuthenticatedPagosRoute
   '/panel': typeof AuthenticatedPanelRoute
+  '/arrendatarios/$tenantId': typeof AuthenticatedArrendatariosTenantIdRoute
   '/contratos/$contractId': typeof AuthenticatedContratosContractIdRoute
   '/propiedades/$propertyId': typeof AuthenticatedPropiedadesPropertyIdRoute
   '/propietarios/$ownerId': typeof AuthenticatedPropietariosOwnerIdRoute
@@ -139,6 +147,7 @@ export interface FileRoutesByTo {
   '/cartolas': typeof AuthenticatedCartolasRoute
   '/pagos': typeof AuthenticatedPagosRoute
   '/panel': typeof AuthenticatedPanelRoute
+  '/arrendatarios/$tenantId': typeof AuthenticatedArrendatariosTenantIdRoute
   '/contratos/$contractId': typeof AuthenticatedContratosContractIdRoute
   '/propiedades/$propertyId': typeof AuthenticatedPropiedadesPropertyIdRoute
   '/propietarios/$ownerId': typeof AuthenticatedPropietariosOwnerIdRoute
@@ -158,6 +167,7 @@ export interface FileRoutesById {
   '/_authenticated/cartolas': typeof AuthenticatedCartolasRoute
   '/_authenticated/pagos': typeof AuthenticatedPagosRoute
   '/_authenticated/panel': typeof AuthenticatedPanelRoute
+  '/_authenticated/arrendatarios/$tenantId': typeof AuthenticatedArrendatariosTenantIdRoute
   '/_authenticated/contratos/$contractId': typeof AuthenticatedContratosContractIdRoute
   '/_authenticated/propiedades/$propertyId': typeof AuthenticatedPropiedadesPropertyIdRoute
   '/_authenticated/propietarios/$ownerId': typeof AuthenticatedPropietariosOwnerIdRoute
@@ -177,6 +187,7 @@ export interface FileRouteTypes {
     | '/cartolas'
     | '/pagos'
     | '/panel'
+    | '/arrendatarios/$tenantId'
     | '/contratos/$contractId'
     | '/propiedades/$propertyId'
     | '/propietarios/$ownerId'
@@ -194,6 +205,7 @@ export interface FileRouteTypes {
     | '/cartolas'
     | '/pagos'
     | '/panel'
+    | '/arrendatarios/$tenantId'
     | '/contratos/$contractId'
     | '/propiedades/$propertyId'
     | '/propietarios/$ownerId'
@@ -212,6 +224,7 @@ export interface FileRouteTypes {
     | '/_authenticated/cartolas'
     | '/_authenticated/pagos'
     | '/_authenticated/panel'
+    | '/_authenticated/arrendatarios/$tenantId'
     | '/_authenticated/contratos/$contractId'
     | '/_authenticated/propiedades/$propertyId'
     | '/_authenticated/propietarios/$ownerId'
@@ -287,6 +300,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedArrendatariosIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/arrendatarios/$tenantId': {
+      id: '/_authenticated/arrendatarios/$tenantId'
+      path: '/arrendatarios/$tenantId'
+      fullPath: '/arrendatarios/$tenantId'
+      preLoaderRoute: typeof AuthenticatedArrendatariosTenantIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/contratos/': {
       id: '/_authenticated/contratos/'
       path: '/contratos'
@@ -351,6 +371,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCartolasRoute: typeof AuthenticatedCartolasRoute
   AuthenticatedPagosRoute: typeof AuthenticatedPagosRoute
   AuthenticatedPanelRoute: typeof AuthenticatedPanelRoute
+  AuthenticatedArrendatariosTenantIdRoute: typeof AuthenticatedArrendatariosTenantIdRoute
   AuthenticatedContratosContractIdRoute: typeof AuthenticatedContratosContractIdRoute
   AuthenticatedPropiedadesPropertyIdRoute: typeof AuthenticatedPropiedadesPropertyIdRoute
   AuthenticatedPropietariosOwnerIdRoute: typeof AuthenticatedPropietariosOwnerIdRoute
@@ -367,6 +388,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCartolasRoute: AuthenticatedCartolasRoute,
   AuthenticatedPagosRoute: AuthenticatedPagosRoute,
   AuthenticatedPanelRoute: AuthenticatedPanelRoute,
+  AuthenticatedArrendatariosTenantIdRoute:
+    AuthenticatedArrendatariosTenantIdRoute,
   AuthenticatedContratosContractIdRoute: AuthenticatedContratosContractIdRoute,
   AuthenticatedPropiedadesPropertyIdRoute:
     AuthenticatedPropiedadesPropertyIdRoute,
