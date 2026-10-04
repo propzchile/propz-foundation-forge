@@ -8,3 +8,6 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Keep tenant detail as a dedicated authenticated route so its profile and contract links have a shareable, access-controlled URL.
+- Reuse the unit detail's contract dialog for both contextual and standalone contract creation so the existing contract mutation remains the single creation path.
