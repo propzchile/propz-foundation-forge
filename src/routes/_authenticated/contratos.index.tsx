@@ -9,6 +9,7 @@ import {
   StatusBadge,
 } from "@/components/propz/app-shell";
 import { DeleteAction } from "@/components/propz/delete-action";
+import { NewContractDialog } from "@/routes/_authenticated/unidades.$unitId";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -76,6 +77,7 @@ function ContractsListPage() {
       title="Contratos"
       description="Contratos de arriendo vinculados a unidades de tu cartera."
       crumbs={[{ label: "Contratos" }]}
+      actions={<NewContractDialog />}
     >
       <div className="mb-4 flex flex-wrap gap-3">
         <Input

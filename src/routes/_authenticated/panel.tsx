@@ -6,8 +6,6 @@ import {
   Users,
   FileText,
   Home,
-  KeyRound,
-  DoorOpen,
   Bell,
   Plus,
 } from "lucide-react";
@@ -21,6 +19,7 @@ import {
   StatusBadge,
 } from "@/components/propz/app-shell";
 import { Button } from "@/components/ui/button";
+import { NewContractDialog } from "@/routes/_authenticated/unidades.$unitId";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAppContext } from "@/lib/propz/session";
 import {
