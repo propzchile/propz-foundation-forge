@@ -1,0 +1,5 @@
+- [ ] Simplificar y enlazar indicadores, gráfico, acciones y disponibilidad en Panel.
+- [ ] Mostrar ficha y contratos al abrir un arrendatario.
+- [ ] Estabilizar altura de tarjetas de unidades en propiedad.
+- [ ] Ofrecer nuevo contrato en Panel y Contratos reutilizando el diálogo existente.
+- [ ] Verificar navegación y creación con vista previa.
