@@ -31,6 +31,7 @@ import {
   useProperties,
   useSeedDemoData,
   useSetPrimaryRole,
+  useTenants,
 } from "@/lib/propz/queries";
 
 export const Route = createFileRoute("/_authenticated/panel")({
@@ -152,52 +153,17 @@ function DemoDataButton() {
   );
 }
 
-function KpiCard({
-  icon: Icon,
-  label,
-  value,
-  hint,
-}: {
-  icon: typeof Building2;
-  label: string;
-  value: number | string;
-  hint?: string;
-}) {
-  return (
-    <Card>
-      <CardContent className="flex items-start gap-3 pt-6">
-        <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-secondary text-secondary-foreground">
-          <Icon className="size-5" />
-        </span>
-        <div className="min-w-0">
-          <div className="text-2xl font-semibold tabular-nums">{value}</div>
-          <div className="text-xs font-medium text-muted-foreground">{label}</div>
-          {hint && <div className="mt-0.5 text-[11px] text-muted-foreground/80">{hint}</div>}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function SummaryRow({ label, value }: { label: string; value: number | string }) {
-  return (
-    <div className="flex items-center justify-between border-b py-2 last:border-b-0">
-      <span className="text-sm text-muted-foreground">{label}</span>
-      <span className="text-sm font-semibold tabular-nums">{value}</span>
-    </div>
-  );
-}
-
 function OperationalPanel() {
   const ctx = useAppContext();
   const properties = useProperties();
   const units = useAllUnits();
   const owners = useOwners();
+  const tenants = useTenants();
   const contracts = useContracts({});
 
   const isLoading =
-    properties.isLoading || units.isLoading || owners.isLoading || contracts.isLoading;
-  const isError = properties.isError || units.isError || owners.isError || contracts.isError;
+    properties.isLoading || units.isLoading || owners.isLoading || tenants.isLoading || contracts.isLoading;
+  const isError = properties.isError || units.isError || owners.isError || tenants.isError || contracts.isError;
 
   const activeUnits = (units.data ?? []).filter((u) => u.status !== "archivado");
   const activeContracts = (contracts.data ?? []).filter((c) => c.status === "ACTIVO");
@@ -209,6 +175,8 @@ function OperationalPanel() {
   const occupancyPct = totalUnits > 0 ? Math.round((occupied / totalUnits) * 100) : null;
 
   const activeProperties = (properties.data ?? []).filter((p) => p.status !== "archivado");
+  const activeOwnerIds = new Set((owners.data ?? []).filter((o) => o.status !== "archivado").map((o) => o.id));
+  const activeTenants = (tenants.data ?? []).filter((t) => t.status !== "archivado" && activeOwnerIds.has(t.owner_id));
   const ownerNameById = new Map((owners.data ?? []).map((o) => [o.id, o.display_name]));
 
   const displayName =
@@ -236,39 +204,34 @@ function OperationalPanel() {
             properties.refetch();
             units.refetch();
             owners.refetch();
+            tenants.refetch();
             contracts.refetch();
           }}
           retrying={properties.isFetching || units.isFetching}
         />
       ) : (
         <div className="space-y-10">
-          {/* KPIs */}
-          <section aria-label="Indicadores principales">
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {ctx.isAdmin && (
-                <KpiCard icon={Users} label="Propietarios" value={owners.data?.length ?? 0} />
-              )}
-              <KpiCard icon={Building2} label="Propiedades" value={activeProperties.length} />
-              <KpiCard icon={Home} label="Unidades" value={totalUnits} />
-              <KpiCard icon={FileText} label="Contratos activos" value={activeContracts.length} />
-              <KpiCard
-                icon={KeyRound}
-                label="Ocupación"
-                value={occupancyPct === null ? "—" : `${occupancyPct}%`}
-                hint={totalUnits > 0 ? `${occupied} de ${totalUnits} unidades` : "Sin unidades"}
-              />
-              <KpiCard icon={DoorOpen} label="Disponibles" value={available} />
+          <section aria-label="Resumen de cartera">
+            <h2 className="mb-3 text-lg font-semibold">Resumen de cartera</h2>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {([
+                ["Propiedades", activeProperties.length, "/propiedades", Building2],
+                ["Unidades", totalUnits, "/unidades", Home],
+                ["Arrendatarios", activeTenants.length, "/arrendatarios", Users],
+                ["Contratos", activeContracts.length, "/contratos", FileText],
+              ] as const).map(([label, value, to, Icon]) => (
+                <Link key={label} to={to} className="surface-card flex items-center gap-3 p-4 transition-colors hover:border-accent focus-visible:outline-2 focus-visible:outline-accent">
+                  <span className="grid size-10 shrink-0 place-items-center rounded-md bg-secondary text-secondary-foreground"><Icon className="size-5" /></span>
+                  <span className="min-w-0"><span className="block text-2xl font-semibold tabular-nums">{value}</span><span className="text-sm text-muted-foreground">{label}</span></span>
+                </Link>
+              ))}
             </div>
-
           </section>
 
-          {/* Ocupación + resumen */}
-          <section className="grid gap-4 lg:grid-cols-3" aria-label="Estado de ocupación">
-            <Card className="lg:col-span-2">
-              <CardHeader>
-                <CardTitle className="text-base">Estado de ocupación</CardTitle>
-              </CardHeader>
-              <CardContent>
+          <section aria-label="Estado de ocupación">
+            <Link to="/unidades" className="surface-card block p-5 transition-colors hover:border-accent focus-visible:outline-2 focus-visible:outline-accent">
+              <h2 className="text-base font-semibold">Estado de ocupación</h2>
+              <div className="mt-4">
                 {totalUnits === 0 ? (
                   <p className="text-sm text-muted-foreground">
                     Aún no hay unidades registradas para calcular la ocupación.
@@ -296,21 +259,8 @@ function OperationalPanel() {
                     </div>
                   </>
                 )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Resumen de cartera</CardTitle>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <SummaryRow label="Propiedades" value={activeProperties.length} />
-                <SummaryRow label="Unidades" value={totalUnits} />
-                <SummaryRow label="Ocupadas" value={occupied} />
-                <SummaryRow label="Disponibles" value={available} />
-                <SummaryRow label="Contratos activos" value={activeContracts.length} />
-              </CardContent>
-            </Card>
+              </div>
+            </Link>
           </section>
 
           {/* Acciones rápidas */}
@@ -339,11 +289,7 @@ function OperationalPanel() {
                   <Plus className="size-4" /> Nuevo arrendatario
                 </Link>
               </Button>
-              <Button asChild variant="outline">
-                <Link to="/contratos">
-                  <Plus className="size-4" /> Nuevo contrato
-                </Link>
-              </Button>
+              <NewContractDialog />
             </div>
 
           </section>
@@ -395,19 +341,14 @@ function OperationalPanel() {
                       <p className="mt-0.5 text-xs text-muted-foreground">
                         Propietario: {ownerNameById.get(p.owner_id) ?? "—"}
                       </p>
-                      <div className="mt-3 flex gap-4 text-xs">
+                      <div className="mt-3 flex flex-wrap items-center gap-3 text-xs">
                         <span>
                           <span className="font-semibold tabular-nums">{pUnits.length}</span>{" "}
                           unidades
                         </span>
-                        <span>
-                          <span className="font-semibold tabular-nums">{pOccupied}</span> ocupadas
-                        </span>
-                        <span>
-                          <span className="font-semibold tabular-nums">
-                            {pUnits.length - pOccupied}
-                          </span>{" "}
-                          disponibles
+                        <span className="text-muted-foreground">{pOccupied} ocupadas</span>
+                        <span className="rounded-md bg-accent/15 px-2 py-1 font-semibold text-accent ring-1 ring-accent/40">
+                          {pUnits.length - pOccupied} disponibles
                         </span>
                       </div>
                     </Link>
