@@ -475,14 +475,14 @@ function AttentionSection({
                     <Link to="/propiedades/$propertyId" params={{ propertyId: c.property_id }} className="font-medium hover:underline">
                       {propertyName(c.property_id)}
                     </Link>
-                    <Link to="/unidades/$unitId" params={{ unitId: primary }} className="text-sm text-muted-foreground hover:underline">
+                    <Link to="/unidades/$unitId" params={{ unitId: primary ?? c.unit_id }} className="text-sm text-muted-foreground hover:underline">
                       {contractUnitIds(c).map(unitName).join(" + ")}
                     </Link>
                   </div>
                   <dl className="mt-3 grid gap-1 text-sm">
                     <div className="flex justify-between"><dt>Arriendo (día {c.due_day})</dt><dd className="tabular-nums">{formatMoney(Number(c.rent_amount), c.currency)}</dd></div>
                     {CHARGE_CONCEPTS.map(({ value, label }) => {
-                      const ch = charges.get(`${primary}:${value}`);
+                      const ch = charges.get(`${primary ?? c.unit_id}:${value}`);
                       return (
                         <div key={value} className="flex justify-between text-muted-foreground">
                           <dt>{label}</dt>
