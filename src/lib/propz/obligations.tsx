@@ -35,7 +35,11 @@ export type ReferenceCharge = {
 };
 
 export type Thresholds = { rent_days: number; common_months: number; utilities_months: number };
-export const DEFAULT_THRESHOLDS: Thresholds = { rent_days: 15, common_months: 2, utilities_months: 2 };
+export const DEFAULT_THRESHOLDS: Thresholds = {
+  rent_days: 15,
+  common_months: 2,
+  utilities_months: 2,
+};
 
 /** Historial completo de valores de referencia (más reciente primero). */
 export function useReferenceCharges(unitId?: string) {
@@ -68,7 +72,12 @@ export function currentCharges(rows: ReferenceCharge[]) {
 export function useAddReferenceCharge() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (v: { unit_id: string; concept: ChargeConcept; monthly_amount: number; effective_from: string }) => {
+    mutationFn: async (v: {
+      unit_id: string;
+      concept: ChargeConcept;
+      monthly_amount: number;
+      effective_from: string;
+    }) => {
       const { error } = await supabase.from("unit_reference_charges" as never).insert(v as never);
       if (error) throw error;
     },
@@ -129,11 +138,13 @@ export function ThresholdsDialog({ userId }: { userId: string | null }) {
           <DialogTitle>Umbrales de criticidad</DialogTitle>
         </DialogHeader>
         <div className="grid gap-4">
-          {([
-            ["rent_days", "Arriendo: días de atraso"],
-            ["common_months", "Gastos comunes: meses de atraso"],
-            ["utilities_months", "Agua/Luz/Gas: meses de atraso"],
-          ] as const).map(([k, label]) => (
+          {(
+            [
+              ["rent_days", "Arriendo: días de atraso"],
+              ["common_months", "Gastos comunes: meses de atraso"],
+              ["utilities_months", "Agua/Luz/Gas: meses de atraso"],
+            ] as const
+          ).map(([k, label]) => (
             <div key={k} className="grid gap-1.5">
               <Label htmlFor={k}>{label}</Label>
               <Input
@@ -141,7 +152,9 @@ export function ThresholdsDialog({ userId }: { userId: string | null }) {
                 type="number"
                 min={0}
                 value={form[k]}
-                onChange={(e) => setForm({ ...form, [k]: Math.max(0, Number(e.target.value) || 0) })}
+                onChange={(e) =>
+                  setForm({ ...form, [k]: Math.max(0, Number(e.target.value) || 0) })
+                }
               />
             </div>
           ))}
@@ -190,19 +203,38 @@ export function ReferenceChargesCard({ unitId }: { unitId: string }) {
               <div>
                 <p className="text-sm font-medium">{label}</p>
                 <p className="text-xs text-muted-foreground">
-                  {c ? `${formatMoney(Number(c.monthly_amount), c.currency)} · desde ${formatDate(c.effective_from)}` : "Sin valor"}
+                  {c
+                    ? `${formatMoney(Number(c.monthly_amount), c.currency)} · desde ${formatDate(c.effective_from)}`
+                    : "Sin valor"}
                 </p>
               </div>
               {editing === value ? (
                 <div className="flex flex-wrap items-center gap-2">
-                  <Input className="w-28" type="number" min={0} placeholder="Monto" value={amount} onChange={(e) => setAmount(e.target.value)} />
-                  <Input className="w-36" type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+                  <Input
+                    className="w-28"
+                    type="number"
+                    min={0}
+                    placeholder="Monto"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                  />
+                  <Input
+                    className="w-36"
+                    type="date"
+                    value={from}
+                    onChange={(e) => setFrom(e.target.value)}
+                  />
                   <Button
                     size="sm"
                     disabled={add.isPending || amount === ""}
                     onClick={async () => {
                       try {
-                        await add.mutateAsync({ unit_id: unitId, concept: value, monthly_amount: Number(amount), effective_from: from });
+                        await add.mutateAsync({
+                          unit_id: unitId,
+                          concept: value,
+                          monthly_amount: Number(amount),
+                          effective_from: from,
+                        });
                         toast.success("Valor actualizado");
                         setEditing(null);
                       } catch (e) {
@@ -212,10 +244,19 @@ export function ReferenceChargesCard({ unitId }: { unitId: string }) {
                   >
                     Guardar
                   </Button>
-                  <Button size="sm" variant="ghost" onClick={() => setEditing(null)}>Cancelar</Button>
+                  <Button size="sm" variant="ghost" onClick={() => setEditing(null)}>
+                    Cancelar
+                  </Button>
                 </div>
               ) : (
-                <Button size="sm" variant="outline" onClick={() => { setEditing(value); setAmount(c ? String(c.monthly_amount) : ""); }}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setEditing(value);
+                    setAmount(c ? String(c.monthly_amount) : "");
+                  }}
+                >
                   {c ? "Actualizar" : "Agregar"}
                 </Button>
               )}
