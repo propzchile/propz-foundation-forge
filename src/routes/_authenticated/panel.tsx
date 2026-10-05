@@ -346,9 +346,13 @@ function OperationalPanel() {
                           unidades
                         </span>
                         <span className="text-muted-foreground">{pOccupied} ocupadas</span>
-                        <span className="rounded-md bg-accent/15 px-2 py-1 font-semibold text-accent ring-1 ring-accent/40">
-                          {pUnits.length - pOccupied} disponibles
-                        </span>
+                        {pUnits.length - pOccupied > 0 ? (
+                          <span className="rounded-md bg-destructive/15 px-2 py-1 font-semibold text-destructive ring-1 ring-destructive/40">
+                            {pUnits.length - pOccupied} disponibles
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">0 disponibles</span>
+                        )}
                       </div>
                     </Link>
                   );
