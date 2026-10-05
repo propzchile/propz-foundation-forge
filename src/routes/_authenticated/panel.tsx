@@ -177,6 +177,10 @@ function OperationalPanel() {
   const activeOwnerIds = new Set((owners.data ?? []).filter((o) => o.status !== "archivado").map((o) => o.id));
   const activeTenants = (tenants.data ?? []).filter((t) => t.status !== "archivado" && activeOwnerIds.has(t.owner_id));
   const ownerNameById = new Map((owners.data ?? []).map((o) => [o.id, o.display_name]));
+  const refCharges = useReferenceCharges();
+  const chargeMap = currentCharges(refCharges.data ?? []);
+  // Sin registro de pagos aún: ninguna obligación figura como atrasada.
+  const incidentPropertyIds = new Set<string>();
 
   const displayName =
     [ctx.profile?.first_name, ctx.profile?.last_name].filter(Boolean).join(" ") ||
@@ -210,6 +214,16 @@ function OperationalPanel() {
         />
       ) : (
         <div className="space-y-10">
+          <AttentionSection
+            userId={ctx.userId}
+            contracts={activeContracts.filter((c) => activeProperties.some((p) => p.id === c.property_id))}
+            propertyName={(id) => activeProperties.find((p) => p.id === id)?.alias ?? "—"}
+            unitName={(id) => {
+              const u = (units.data ?? []).find((x) => x.id === id);
+              return u?.alias || u?.identifier || "—";
+            }}
+            charges={chargeMap}
+          />
           <section aria-label="Resumen de cartera">
             <h2 className="mb-3 text-lg font-semibold">Resumen de cartera</h2>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
