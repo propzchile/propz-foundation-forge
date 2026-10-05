@@ -3,6 +3,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { AppShell, EmptyState, StatusBadge } from "@/components/propz/app-shell";
+import { ReferenceChargesCard } from "@/lib/propz/obligations";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -114,6 +115,9 @@ function UnitDetail() {
         ) : null
       }
     >
+      {unit.data && unit.data.rental_mode !== "parte_de_conjunto" && (
+        <ReferenceChargesCard unitId={unit.data.id} />
+      )}
       <h2 className="mb-3 text-lg font-semibold">Contrato vigente</h2>
       {current.length === 0 ? (
         <EmptyState title="Unidad sin contrato activo" hint="Crea un contrato para arrendarla." />

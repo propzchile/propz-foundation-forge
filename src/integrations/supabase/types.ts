@@ -210,6 +210,33 @@ export type Database = {
           },
         ]
       }
+      dashboard_thresholds: {
+        Row: {
+          common_months: number
+          created_at: string
+          rent_days: number
+          updated_at: string
+          user_id: string
+          utilities_months: number
+        }
+        Insert: {
+          common_months?: number
+          created_at?: string
+          rent_days?: number
+          updated_at?: string
+          user_id?: string
+          utilities_months?: number
+        }
+        Update: {
+          common_months?: number
+          created_at?: string
+          rent_days?: number
+          updated_at?: string
+          user_id?: string
+          utilities_months?: number
+        }
+        Relationships: []
+      }
       owners: {
         Row: {
           archived_at: string | null
@@ -418,6 +445,53 @@ export type Database = {
           },
         ]
       }
+      unit_reference_charges: {
+        Row: {
+          concept: Database["public"]["Enums"]["charge_concept"]
+          created_at: string
+          created_by: string | null
+          currency: string
+          effective_from: string
+          id: string
+          monthly_amount: number
+          source: string
+          unit_id: string
+          updated_at: string
+        }
+        Insert: {
+          concept: Database["public"]["Enums"]["charge_concept"]
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          effective_from?: string
+          id?: string
+          monthly_amount?: number
+          source?: string
+          unit_id: string
+          updated_at?: string
+        }
+        Update: {
+          concept?: Database["public"]["Enums"]["charge_concept"]
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          effective_from?: string
+          id?: string
+          monthly_amount?: number
+          source?: string
+          unit_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "unit_reference_charges_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       units: {
         Row: {
           alias: string | null
@@ -542,6 +616,7 @@ export type Database = {
     }
     Enums: {
       app_role: "propietario" | "administrador" | "superadmin"
+      charge_concept: "gastos_comunes" | "agua" | "luz" | "gas"
       contract_periodicity:
         | "mensual"
         | "bimestral"
@@ -698,6 +773,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["propietario", "administrador", "superadmin"],
+      charge_concept: ["gastos_comunes", "agua", "luz", "gas"],
       contract_periodicity: [
         "mensual",
         "bimestral",

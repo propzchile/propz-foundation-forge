@@ -23,6 +23,15 @@ import { NewContractDialog } from "@/routes/_authenticated/unidades.$unitId";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAppContext } from "@/lib/propz/session";
 import {
+  CHARGE_CONCEPTS,
+  ThresholdsDialog,
+  currentCharges,
+  useReferenceCharges,
+  type ReferenceCharge,
+} from "@/lib/propz/obligations";
+import { formatMoney } from "@/lib/propz/domain";
+import type { ContractWithRelations } from "@/lib/propz/queries";
+import {
   contractUnitIds,
   useAllUnits,
   useContracts,
@@ -177,6 +186,10 @@ function OperationalPanel() {
   const activeOwnerIds = new Set((owners.data ?? []).filter((o) => o.status !== "archivado").map((o) => o.id));
   const activeTenants = (tenants.data ?? []).filter((t) => t.status !== "archivado" && activeOwnerIds.has(t.owner_id));
   const ownerNameById = new Map((owners.data ?? []).map((o) => [o.id, o.display_name]));
+  const refCharges = useReferenceCharges();
+  const chargeMap = currentCharges(refCharges.data ?? []);
+  // Sin registro de pagos aún: ninguna obligación figura como atrasada.
+  const incidentPropertyIds = new Set<string>();
 
   const displayName =
     [ctx.profile?.first_name, ctx.profile?.last_name].filter(Boolean).join(" ") ||
@@ -210,6 +223,16 @@ function OperationalPanel() {
         />
       ) : (
         <div className="space-y-10">
+          <AttentionSection
+            userId={ctx.userId}
+            contracts={activeContracts.filter((c) => activeProperties.some((p) => p.id === c.property_id))}
+            propertyName={(id) => activeProperties.find((p) => p.id === id)?.alias ?? "—"}
+            unitName={(id) => {
+              const u = (units.data ?? []).find((x) => x.id === id);
+              return u?.alias || u?.identifier || "—";
+            }}
+            charges={chargeMap}
+          />
           <section aria-label="Resumen de cartera">
             <h2 className="mb-3 text-lg font-semibold">Resumen de cartera</h2>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -331,7 +354,11 @@ function OperationalPanel() {
                     >
                       <div className="flex items-start justify-between gap-3">
                         <span className="font-medium">{p.alias}</span>
-                        <StatusBadge status={p.status} />
+                        {incidentPropertyIds.has(p.id) ? (
+                          <span className="rounded-md bg-destructive/15 px-2 py-0.5 text-xs font-semibold text-destructive">Requiere atención</span>
+                        ) : (
+                          <span className="rounded-md bg-accent/15 px-2 py-0.5 text-xs font-semibold text-accent">Al día</span>
+                        )}
                       </div>
                       <p className="mt-1 text-xs text-muted-foreground">
                         {p.address}
@@ -379,5 +406,97 @@ function OperationalPanel() {
         </div>
       )}
     </AppShell>
+  );
+}
+
+function AttentionSection({
+  userId,
+  contracts,
+  propertyName,
+  unitName,
+  charges,
+}: {
+  userId: string | null;
+  contracts: ContractWithRelations[];
+  propertyName: (id: string) => string;
+  unitName: (id: string) => string;
+  charges: Map<string, ReferenceCharge>;
+}) {
+  const [view, setView] = useState<"atencion" | "aldia" | null>(null);
+  // Incidencias: requieren pagos registrados. Hasta entonces la lista está vacía.
+  const incidents: { contractId: string; severity: number; amount: number }[] = [];
+  const attentionIds = new Set(incidents.map((i) => i.contractId));
+  const okContracts = contracts.filter((c) => !attentionIds.has(c.id));
+  const attentionContracts = contracts.filter((c) => attentionIds.has(c.id));
+  const shown = view === "atencion" ? attentionContracts : view === "aldia" ? okContracts : [];
+
+  return (
+    <section aria-label="Qué requiere mi atención">
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <h2 className="text-lg font-semibold">¿Qué requiere mi atención?</h2>
+        <ThresholdsDialog userId={userId} />
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <button
+          type="button"
+          onClick={() => setView(view === "atencion" ? null : "atencion")}
+          className={`surface-card p-5 text-left transition-colors hover:border-destructive ${view === "atencion" ? "border-destructive" : ""} ${attentionContracts.length ? "bg-destructive/10" : ""}`}
+        >
+          <span className="text-xs font-semibold tracking-wide text-destructive">🔴 REQUIERE ATENCIÓN</span>
+          <span className="mt-1 block text-3xl font-semibold tabular-nums">{attentionContracts.length}</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setView(view === "aldia" ? null : "aldia")}
+          className={`surface-card p-5 text-left transition-colors hover:border-accent ${view === "aldia" ? "border-accent" : ""}`}
+        >
+          <span className="text-xs font-semibold tracking-wide text-accent">🟢 AL DÍA</span>
+          <span className="mt-1 block text-3xl font-semibold tabular-nums">{okContracts.length}</span>
+        </button>
+      </div>
+
+      <div className="surface-card mt-3 p-4">
+        <h3 className="text-sm font-semibold">Incidencias</h3>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Sin incidencias. Arriendos, gastos comunes, servicios, pagos parciales e incumplimientos atrasados aparecerán aquí, ordenados por criticidad y monto, cuando se registren los pagos.
+        </p>
+      </div>
+
+      {view && (
+        <div className="mt-3 space-y-2">
+          {shown.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No hay unidades en esta categoría.</p>
+          ) : (
+            shown.map((c) => {
+              const primary = contractUnitIds(c)[0];
+              return (
+                <div key={c.id} className="surface-card p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <Link to="/propiedades/$propertyId" params={{ propertyId: c.property_id }} className="font-medium hover:underline">
+                      {propertyName(c.property_id)}
+                    </Link>
+                    <Link to="/unidades/$unitId" params={{ unitId: primary ?? c.unit_id }} className="text-sm text-muted-foreground hover:underline">
+                      {contractUnitIds(c).map(unitName).join(" + ")}
+                    </Link>
+                  </div>
+                  <dl className="mt-3 grid gap-1 text-sm">
+                    <div className="flex justify-between"><dt>Arriendo (día {c.due_day})</dt><dd className="tabular-nums">{formatMoney(Number(c.rent_amount), c.currency)}</dd></div>
+                    {CHARGE_CONCEPTS.map(({ value, label }) => {
+                      const ch = charges.get(`${primary ?? c.unit_id}:${value}`);
+                      return (
+                        <div key={value} className="flex justify-between text-muted-foreground">
+                          <dt>{label}</dt>
+                          <dd className="tabular-nums">{ch ? formatMoney(Number(ch.monthly_amount), ch.currency) : "Sin valor"}</dd>
+                        </div>
+                      );
+                    })}
+                  </dl>
+                </div>
+              );
+            })
+          )}
+        </div>
+      )}
+    </section>
   );
 }
