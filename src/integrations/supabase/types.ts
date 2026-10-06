@@ -79,6 +79,75 @@ export type Database = {
         }
         Relationships: []
       }
+      bank_transactions: {
+        Row: {
+          account: string | null
+          amount: number
+          bank: string | null
+          created_at: string
+          description: string
+          document_id: string
+          id: string
+          match_status: string
+          payer_name: string | null
+          payer_rut: string | null
+          row_hash: string
+          suggested_contract_id: string | null
+          txn_date: string | null
+          updated_at: string
+          uploaded_by: string
+        }
+        Insert: {
+          account?: string | null
+          amount: number
+          bank?: string | null
+          created_at?: string
+          description?: string
+          document_id: string
+          id?: string
+          match_status?: string
+          payer_name?: string | null
+          payer_rut?: string | null
+          row_hash: string
+          suggested_contract_id?: string | null
+          txn_date?: string | null
+          updated_at?: string
+          uploaded_by?: string
+        }
+        Update: {
+          account?: string | null
+          amount?: number
+          bank?: string | null
+          created_at?: string
+          description?: string
+          document_id?: string
+          id?: string
+          match_status?: string
+          payer_name?: string | null
+          payer_rut?: string | null
+          row_hash?: string
+          suggested_contract_id?: string | null
+          txn_date?: string | null
+          updated_at?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_transactions_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "payment_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bank_transactions_suggested_contract_id_fkey"
+            columns: ["suggested_contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contract_units: {
         Row: {
           contract_id: string
@@ -288,6 +357,54 @@ export type Database = {
           tax_id?: string | null
           updated_at?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      payment_documents: {
+        Row: {
+          account: string | null
+          bank: string | null
+          created_at: string
+          extraction_notes: string | null
+          file_hash: string
+          file_name: string
+          file_path: string
+          id: string
+          kind: Database["public"]["Enums"]["payment_doc_kind"]
+          mime_type: string | null
+          status: string
+          updated_at: string
+          uploaded_by: string
+        }
+        Insert: {
+          account?: string | null
+          bank?: string | null
+          created_at?: string
+          extraction_notes?: string | null
+          file_hash: string
+          file_name: string
+          file_path: string
+          id?: string
+          kind: Database["public"]["Enums"]["payment_doc_kind"]
+          mime_type?: string | null
+          status?: string
+          updated_at?: string
+          uploaded_by?: string
+        }
+        Update: {
+          account?: string | null
+          bank?: string | null
+          created_at?: string
+          extraction_notes?: string | null
+          file_hash?: string
+          file_name?: string
+          file_path?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["payment_doc_kind"]
+          mime_type?: string | null
+          status?: string
+          updated_at?: string
+          uploaded_by?: string
         }
         Relationships: []
       }
@@ -576,6 +693,72 @@ export type Database = {
         }
         Relationships: []
       }
+      utility_bills: {
+        Row: {
+          amount: number | null
+          company: string | null
+          concept: Database["public"]["Enums"]["charge_concept"]
+          created_at: string
+          customer_id: string | null
+          document_id: string
+          due_date: string | null
+          id: string
+          issue_date: string | null
+          period: string | null
+          status: string
+          unit_id: string | null
+          updated_at: string
+          uploaded_by: string
+        }
+        Insert: {
+          amount?: number | null
+          company?: string | null
+          concept: Database["public"]["Enums"]["charge_concept"]
+          created_at?: string
+          customer_id?: string | null
+          document_id: string
+          due_date?: string | null
+          id?: string
+          issue_date?: string | null
+          period?: string | null
+          status?: string
+          unit_id?: string | null
+          updated_at?: string
+          uploaded_by?: string
+        }
+        Update: {
+          amount?: number | null
+          company?: string | null
+          concept?: Database["public"]["Enums"]["charge_concept"]
+          created_at?: string
+          customer_id?: string | null
+          document_id?: string
+          due_date?: string | null
+          id?: string
+          issue_date?: string | null
+          period?: string | null
+          status?: string
+          unit_id?: string | null
+          updated_at?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "utility_bills_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: true
+            referencedRelation: "payment_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "utility_bills_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -626,6 +809,7 @@ export type Database = {
       contract_status: "BORRADOR" | "ACTIVO" | "FINALIZADO" | "CANCELADO"
       entity_status: "activo" | "inactivo" | "archivado"
       party_type: "natural" | "empresa"
+      payment_doc_kind: "cartola" | "gastos_comunes" | "agua" | "luz" | "gas"
       property_type:
         | "departamento"
         | "casa"
@@ -784,6 +968,7 @@ export const Constants = {
       contract_status: ["BORRADOR", "ACTIVO", "FINALIZADO", "CANCELADO"],
       entity_status: ["activo", "inactivo", "archivado"],
       party_type: ["natural", "empresa"],
+      payment_doc_kind: ["cartola", "gastos_comunes", "agua", "luz", "gas"],
       property_type: [
         "departamento",
         "casa",
