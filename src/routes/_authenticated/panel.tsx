@@ -474,9 +474,9 @@ function AttentionSection({
   const shown = view === "urgente" ? urgent : view === "revisar" ? review : view === "aldia" ? okContracts : [];
 
   const kpis = [
-    { key: "urgente" as const, label: "🔴 URGENTE", hint: "Supera el umbral", list: urgent, tone: "text-destructive", border: "border-destructive", bg: "bg-destructive/10" },
-    { key: "revisar" as const, label: "🟡 REVISAR", hint: "Pendiente bajo el umbral", list: review, tone: "text-warning", border: "border-warning", bg: "bg-warning/10" },
-    { key: "aldia" as const, label: "🟢 AL DÍA", hint: "Sin incidencias", list: okContracts, tone: "text-accent", border: "border-accent", bg: "" },
+    { key: "urgente" as const, label: "🔴 URGENTE", hint: "Supera el umbral", list: urgent, tone: "text-destructive", border: "border-destructive", hover: "hover:border-destructive", bg: "bg-destructive/10" },
+    { key: "revisar" as const, label: "🟡 REVISAR", hint: "Pendiente bajo el umbral", list: review, tone: "text-warning", border: "border-warning", hover: "hover:border-warning", bg: "bg-warning/10" },
+    { key: "aldia" as const, label: "🟢 AL DÍA", hint: "Sin incidencias", list: okContracts, tone: "text-accent", border: "border-accent", hover: "hover:border-accent", bg: "" },
   ];
 
   return (
@@ -491,7 +491,7 @@ function AttentionSection({
             key={k.key}
             type="button"
             onClick={() => setView(view === k.key ? null : k.key)}
-            className={`surface-card p-5 text-left transition-colors hover:${k.border} ${view === k.key ? k.border : ""} ${k.list.length && k.bg ? k.bg : ""}`}
+            className={`surface-card p-5 text-left transition-colors ${k.hover} ${view === k.key ? k.border : ""} ${k.list.length && k.bg ? k.bg : ""}`}
           >
             <span className={`text-xs font-semibold tracking-wide ${k.tone}`}>{k.label}</span>
             <span className="mt-1 block text-3xl font-semibold tabular-nums">{k.list.length}</span>
