@@ -33,6 +33,7 @@ import {
 import { OccupancyBadge } from "@/components/propz/occupancy-badge";
 import { PropertyForm } from "@/components/propz/property-form";
 import { UnitForm } from "@/components/propz/unit-form";
+import { ReferenceChargesCard } from "@/lib/propz/obligations";
 import { NewContractDialog } from "@/routes/_authenticated/unidades.$unitId";
 import {
   contractUnitIds,
@@ -164,7 +165,12 @@ function PropertyDetail() {
         },
         { label: p.alias },
       ]}
-      actions={<PropertyActions property={p} />}
+      actions={
+        <div className="flex flex-wrap gap-2">
+          <ExpensesDialog units={(units.data ?? []).filter((u) => u.status !== "archivado" && u.rental_mode !== "parte_de_conjunto")} />
+          <PropertyActions property={p} />
+        </div>
+      }
     >
       <div className="surface-card mb-8 grid gap-3 p-4 sm:grid-cols-3">
         <Field label="Estado" value={<StatusBadge status={p.status} />} />
@@ -492,6 +498,41 @@ function NewUnitDialog({
             }
           }}
         />
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ExpensesDialog({ units }: { units: Unit[] }) {
+  const [unitId, setUnitId] = useState<string>("");
+  const selected = unitId || units[0]?.id || "";
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="outline">Gastos y servicios</Button>
+      </DialogTrigger>
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Gastos y servicios</DialogTitle>
+        </DialogHeader>
+        {units.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Esta propiedad no tiene unidades activas.</p>
+        ) : (
+          <div className="space-y-4">
+            <div className="grid gap-1.5">
+              <Label>Unidad principal</Label>
+              <Select value={selected} onValueChange={setUnitId}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {units.map((u) => (
+                    <SelectItem key={u.id} value={u.id}>{u.alias || u.identifier}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {selected && <ReferenceChargesCard key={selected} unitId={selected} />}
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
