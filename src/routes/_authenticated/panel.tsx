@@ -191,6 +191,14 @@ function OperationalPanel() {
   // Sin registro de pagos aún: ninguna obligación figura como atrasada.
   const incidentPropertyIds = new Set<string>();
 
+  // Contadores de entidades únicas (un contrato con varias unidades cuenta 1).
+  const activePropertyIds = new Set(activeProperties.map((p) => p.id));
+  const portfolioContracts = activeContracts.filter((c) => activePropertyIds.has(c.property_id));
+  const uniqueContractCount = new Set(portfolioContracts.map((c) => c.id)).size;
+  const uniqueTenantCount = new Set(portfolioContracts.map((c) => c.tenant_id)).size;
+  const uniqueUnitCount = new Set(activeUnits.filter((u) => activePropertyIds.has(u.property_id)).map((u) => u.id)).size;
+  void activeTenants;
+
   const displayName =
     [ctx.profile?.first_name, ctx.profile?.last_name].filter(Boolean).join(" ") ||
     ctx.email ||
@@ -225,7 +233,7 @@ function OperationalPanel() {
         <div className="space-y-10">
           <AttentionSection
             userId={ctx.userId}
-            contracts={activeContracts.filter((c) => activeProperties.some((p) => p.id === c.property_id))}
+            contracts={portfolioContracts}
             propertyName={(id) => activeProperties.find((p) => p.id === id)?.alias ?? "—"}
             unitName={(id) => {
               const u = (units.data ?? []).find((x) => x.id === id);
@@ -237,10 +245,10 @@ function OperationalPanel() {
             <h2 className="mb-3 text-lg font-semibold">Resumen de cartera</h2>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {([
-                ["Propiedades", activeProperties.length, "/propiedades", Building2],
-                ["Unidades", totalUnits, "/unidades", Home],
-                ["Arrendatarios", activeTenants.length, "/arrendatarios", Users],
-                ["Contratos", activeContracts.length, "/contratos", FileText],
+                ["Propiedades", activePropertyIds.size, "/propiedades", Building2],
+                ["Unidades", uniqueUnitCount, "/unidades", Home],
+                ["Arrendatarios", uniqueTenantCount, "/arrendatarios", Users],
+                ["Contratos", uniqueContractCount, "/contratos", FileText],
               ] as const).map(([label, value, to, Icon]) => (
                 <Link key={label} to={to} className="surface-card flex items-center gap-3 p-4 transition-colors hover:border-accent focus-visible:outline-2 focus-visible:outline-accent">
                   <span className="grid size-10 shrink-0 place-items-center rounded-md bg-secondary text-secondary-foreground"><Icon className="size-5" /></span>
@@ -316,10 +324,41 @@ function OperationalPanel() {
 
           </section>
 
+          {ctx.isAdmin && (
+            <section aria-label="Propietarios">
+              <div className="mb-3 flex items-center justify-between">
+                <h2 className="text-lg font-semibold">Propietarios</h2>
+                <Button asChild variant="ghost" size="sm"><Link to="/propietarios">Ver todos</Link></Button>
+              </div>
+              <div className="grid gap-3 md:grid-cols-2">
+                {(owners.data ?? []).filter((o) => o.status !== "archivado").map((o) => {
+                  const props = activeProperties.filter((p) => p.owner_id === o.id);
+                  const oUnits = activeUnits.filter((u) => props.some((p) => p.id === u.property_id));
+                  const oOcc = oUnits.filter((u) => occupiedUnitIds.has(u.id)).length;
+                  return (
+                    <Link key={o.id} to="/propietarios/$ownerId" params={{ ownerId: o.id }} className="surface-card block p-4 transition-colors hover:border-accent">
+                      <div className="flex items-start justify-between gap-3">
+                        <span className="font-medium">{o.display_name}</span>
+                        {props.some((p) => incidentPropertyIds.has(p.id)) ? (
+                          <span className="rounded-md bg-destructive/15 px-2 py-0.5 text-xs font-semibold text-destructive">Urgente</span>
+                        ) : (
+                          <span className="rounded-md bg-accent/15 px-2 py-0.5 text-xs font-semibold text-accent">Al día</span>
+                        )}
+                      </div>
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        {props.length} propiedades · {oUnits.length} unidades · {oOcc} ocupadas · {oUnits.length - oOcc} disponibles
+                      </p>
+                    </Link>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
           {/* Mis propiedades */}
           <section aria-label="Mis propiedades">
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Mis propiedades</h2>
+              <h2 className="text-lg font-semibold">{ctx.isAdmin ? "Propiedades de la cartera" : "Mis propiedades"}</h2>
               {activeProperties.length > 0 && (
                 <Button asChild variant="ghost" size="sm">
                   <Link to="/propiedades">Ver todas</Link>
@@ -422,13 +461,23 @@ function AttentionSection({
   unitName: (id: string) => string;
   charges: Map<string, ReferenceCharge>;
 }) {
-  const [view, setView] = useState<"atencion" | "aldia" | null>(null);
+  const [view, setView] = useState<"urgente" | "revisar" | "aldia" | null>(null);
   // Incidencias: requieren pagos registrados. Hasta entonces la lista está vacía.
-  const incidents: { contractId: string; severity: number; amount: number }[] = [];
-  const attentionIds = new Set(incidents.map((i) => i.contractId));
-  const okContracts = contracts.filter((c) => !attentionIds.has(c.id));
-  const attentionContracts = contracts.filter((c) => attentionIds.has(c.id));
-  const shown = view === "atencion" ? attentionContracts : view === "aldia" ? okContracts : [];
+  // level 2 = supera umbral (urgente), 1 = deuda bajo umbral (revisar). Orden: nivel, luego monto.
+  const incidents: { contractId: string; level: 1 | 2; amount: number }[] = [];
+  const sorted = [...incidents].sort((a, b) => b.level - a.level || b.amount - a.amount);
+  const levelOf = new Map<string, number>();
+  for (const i of sorted) levelOf.set(i.contractId, Math.max(levelOf.get(i.contractId) ?? 0, i.level));
+  const urgent = contracts.filter((c) => levelOf.get(c.id) === 2);
+  const review = contracts.filter((c) => levelOf.get(c.id) === 1);
+  const okContracts = contracts.filter((c) => !levelOf.has(c.id));
+  const shown = view === "urgente" ? urgent : view === "revisar" ? review : view === "aldia" ? okContracts : [];
+
+  const kpis = [
+    { key: "urgente" as const, label: "🔴 URGENTE", hint: "Supera el umbral", list: urgent, tone: "text-destructive", border: "border-destructive", hover: "hover:border-destructive", bg: "bg-destructive/10" },
+    { key: "revisar" as const, label: "🟡 REVISAR", hint: "Pendiente bajo el umbral", list: review, tone: "text-warning", border: "border-warning", hover: "hover:border-warning", bg: "bg-warning/10" },
+    { key: "aldia" as const, label: "🟢 AL DÍA", hint: "Sin incidencias", list: okContracts, tone: "text-accent", border: "border-accent", hover: "hover:border-accent", bg: "" },
+  ];
 
   return (
     <section aria-label="Qué requiere mi atención">
@@ -436,23 +485,19 @@ function AttentionSection({
         <h2 className="text-lg font-semibold">¿Qué requiere mi atención?</h2>
         <ThresholdsDialog userId={userId} />
       </div>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <button
-          type="button"
-          onClick={() => setView(view === "atencion" ? null : "atencion")}
-          className={`surface-card p-5 text-left transition-colors hover:border-destructive ${view === "atencion" ? "border-destructive" : ""} ${attentionContracts.length ? "bg-destructive/10" : ""}`}
-        >
-          <span className="text-xs font-semibold tracking-wide text-destructive">🔴 REQUIERE ATENCIÓN</span>
-          <span className="mt-1 block text-3xl font-semibold tabular-nums">{attentionContracts.length}</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setView(view === "aldia" ? null : "aldia")}
-          className={`surface-card p-5 text-left transition-colors hover:border-accent ${view === "aldia" ? "border-accent" : ""}`}
-        >
-          <span className="text-xs font-semibold tracking-wide text-accent">🟢 AL DÍA</span>
-          <span className="mt-1 block text-3xl font-semibold tabular-nums">{okContracts.length}</span>
-        </button>
+      <div className="grid gap-3 sm:grid-cols-3">
+        {kpis.map((k) => (
+          <button
+            key={k.key}
+            type="button"
+            onClick={() => setView(view === k.key ? null : k.key)}
+            className={`surface-card p-5 text-left transition-colors ${k.hover} ${view === k.key ? k.border : ""} ${k.list.length && k.bg ? k.bg : ""}`}
+          >
+            <span className={`text-xs font-semibold tracking-wide ${k.tone}`}>{k.label}</span>
+            <span className="mt-1 block text-3xl font-semibold tabular-nums">{k.list.length}</span>
+            <span className="text-xs text-muted-foreground">{k.hint}</span>
+          </button>
+        ))}
       </div>
 
       <div className="surface-card mt-3 p-4">
