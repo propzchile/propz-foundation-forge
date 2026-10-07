@@ -3,3 +3,4 @@
 - [x] Estabilizar altura de tarjetas de unidades en propiedad.
 - [x] Ofrecer nuevo contrato en Panel y Contratos reutilizando el diálogo existente.
 - [ ] Verificar navegación y creación con vista previa. Bloqueado: no hay sesión de la cuenta solicitante y las pantallas requieren iniciar sesión.
+- [x] Carga de cartolas y boletas con extracción, trazabilidad y sin duplicados.
