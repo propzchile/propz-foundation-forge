@@ -132,7 +132,7 @@ function CartolasPage() {
     mutationFn: async () => {
       if (!file || !user) throw new Error("Selecciona un archivo");
       const path = `${user.id}/${hash}-${file.name.replace(/[^\w.-]/g, "_")}`;
-      const up = await supabase.storage.from("payment-documents").upload(path, file, { upsert: false, contentType: file.type || undefined });
+      const up = await supabase.storage.from("payment-documents").upload(path, file, { upsert: false, ...(file.type ? { contentType: file.type } : {}) });
       if (up.error && !/exists/i.test(up.error.message)) throw up.error;
       const { data: doc, error } = await db
         .from("payment_documents")
@@ -178,7 +178,7 @@ function CartolasPage() {
 
   async function openOriginal(path: string) {
     const { data: s, error } = await supabase.storage.from("payment-documents").createSignedUrl(path, 120);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     window.open(s.signedUrl, "_blank", "noopener");
   }
 
