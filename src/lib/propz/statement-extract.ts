@@ -66,13 +66,34 @@ function parseDate(raw: unknown): string | null {
   return `${y}-${String(mo).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
 }
 
+const RUT_LOOSE_RE = /(?:rut\s*:?\s*)?\b(\d{1,2}\.?\d{3}\.?\d{3}\s?-\s?[\dkK]|0*\d{7,8}[\dkK])\b/i;
+const NOISE_WORDS = new Set(
+  "TRANSF TRANSFERENCIA TRANSFERENCIAS TRASPASO TEF DE DESDE A PARA RUT ABONO DEPOSITO DEPÓSITO PAGO RECIBIDA RECIBIDO OTROS BANCOS BANCO OTRO EN LINEA LÍNEA INTERNET ELECTRONICA ELECTRÓNICA CTA CTE CUENTA VISTA RUTA NRO N° DESDE: FONDOS TERCEROS MISMO DIA SPEI CHILE ESTADO SANTANDER BCI ITAU ITAÚ SCOTIABANK SECURITY FALABELLA RIPLEY BICE CONSORCIO MACH TENPO MERCADOPAGO COOPEUCH INTERNACIONAL S.A. SA SPA LTDA"
+    .split(" "),
+);
+
 function payerFrom(desc: string) {
-  const rut = desc.match(RUT_RE)?.[1] ?? null;
-  const name =
-    desc
-      .match(/(?:TRANSF(?:ERENCIA)?\.?\s*(?:DE|DESDE)?|DE)\s+([A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ .]{3,})/i)?.[1]
-      ?.trim() ?? null;
-  return { payer_rut: normalizeRut(rut), payer_name: name };
+  const m = desc.match(RUT_RE) ?? desc.match(RUT_LOOSE_RE);
+  const rawRut = m?.[1] ?? null;
+  let rest = desc;
+  if (m) rest = rest.replace(m[0], " ");
+  // Nombre + apellido: secuencia de palabras alfabéticas que no sean términos bancarios.
+  const words = rest
+    .replace(/[^A-Za-zÁÉÍÓÚÑÜáéíóúñü\s]/g, " ")
+    .split(/\s+/)
+    .filter((w) => w.length > 1 && !NOISE_WORDS.has(w.toUpperCase()));
+  const name = words.length >= 2 ? words.slice(0, 4).join(" ").toUpperCase() : null;
+  return { payer_rut: normalizeRut(rawRut?.replace(/^0+/, "") ?? null), payer_name: name };
+}
+
+export function normalizeName(v: string | null | undefined) {
+  return (v ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toUpperCase()
+    .replace(/[^A-Z\s]/g, " ")
+    .split(/\s+/)
+    .filter((w) => w.length > 1);
 }
 
 /* -------------------------------- Tablas -------------------------------- */
@@ -92,13 +113,13 @@ function fromRows(rows: unknown[][]): ExtractedTxn[] {
   const col = (re: RegExp) => h.findIndex((c) => re.test(c));
   const cDate = col(/fecha/);
   const cDesc = col(/glosa|descrip|detalle|concepto/);
-  const cCredit = col(/abono|deposito|credito/);
-  const cAmount = col(/monto|importe/);
+  const cCredit = h.findIndex((c) => /abono|deposito|credito/.test(c) && !/cargo|debito|giro/.test(c));
+  const cAmount = cCredit >= 0 ? -1 : col(/monto|importe/);
   const cRut = col(/rut/);
   const cName = col(/nombre|origen|ordenante/);
   const out: ExtractedTxn[] = [];
   for (const r of rows.slice(headerIdx + 1)) {
-    const amount = parseAmount(cCredit >= 0 ? r[cCredit] : r[cAmount]);
+    const amount = parseAmount(cCredit >= 0 ? r[cCredit] : cAmount >= 0 ? r[cAmount] : null);
     if (!amount || amount <= 0) continue;
     const description = cDesc >= 0 ? String(r[cDesc] ?? "").trim() : "";
     const p = payerFrom(description);
@@ -127,11 +148,17 @@ async function tableRows(file: File): Promise<unknown[][]> {
 
 /* ---------------------------------- PDF ---------------------------------- */
 
+type PdfRow = { text: string; parts: { x: number; s: string }[] };
+
 export async function pdfLines(file: File): Promise<string[]> {
+  return (await pdfRows(file)).map((r) => r.text);
+}
+
+async function pdfRows(file: File): Promise<PdfRow[]> {
   const pdfjs = await import("pdfjs-dist");
   pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
   const doc = await pdfjs.getDocument({ data: await file.arrayBuffer() }).promise;
-  const lines: string[] = [];
+  const lines: PdfRow[] = [];
   for (let i = 1; i <= doc.numPages; i++) {
     const page = await doc.getPage(i);
     const content = await page.getTextContent();
@@ -145,20 +172,42 @@ export async function pdfLines(file: File): Promise<string[]> {
     }
     [...byY.entries()]
       .sort((a, b) => b[0] - a[0])
-      .forEach(([, parts]) => lines.push(parts.sort((a, b) => a.x - b.x).map((p) => p.s).join(" ")));
+      .forEach(([, parts]) => {
+        const sorted = parts.sort((a, b) => a.x - b.x);
+        lines.push({ text: sorted.map((p) => p.s).join(" "), parts: sorted });
+      });
   }
   return lines;
 }
 
-function txnsFromLines(lines: string[]): ExtractedTxn[] {
+const AMOUNT_ONLY_RE = /^-?\$?\s?(?:\d{1,3}(?:\.\d{3})+|\d+)(?:,\d+)?$/;
+
+function txnsFromRows(rows: PdfRow[]): ExtractedTxn[] {
+  // Ubica las columnas por el encabezado (Abonos / Cargos / Saldo) para leer el monto por fila.
+  const header = rows.find((r) => r.parts.some((p) => /abono|dep[oó]sito|cr[eé]dito/i.test(p.s)));
+  const colX = (re: RegExp) => header?.parts.find((p) => re.test(p.s))?.x ?? null;
+  const abonoX = colX(/abono|dep[oó]sito|cr[eé]dito/i);
+  const others = [colX(/cargo|d[eé]bito|giro/i), colX(/saldo/i)].filter((x): x is number => x != null);
   const out: ExtractedTxn[] = [];
-  for (const line of lines) {
-    const date = parseDate(line.match(DATE_RE)?.[0]);
-    const amounts = line.match(AMOUNT_RE);
-    if (!date || !amounts?.length) continue;
-    const amount = parseAmount(amounts[0]);
+  for (const row of rows) {
+    if (row === header) continue;
+    const date = parseDate(row.text.match(DATE_RE)?.[0]);
+    if (!date) continue;
+    const amountParts = row.parts.filter((p) => AMOUNT_ONLY_RE.test(p.s.trim()) && /\d{3}/.test(p.s));
+    let amount: number | null = null;
+    if (abonoX != null) {
+      const inAbono = amountParts.filter((p) => others.every((o) => Math.abs(p.x - abonoX) < Math.abs(p.x - o)));
+      amount = inAbono.length ? parseAmount(inAbono[0]!.s) : null;
+    } else {
+      amount = parseAmount(row.text.match(AMOUNT_RE)?.[0]);
+    }
     if (!amount || amount <= 0) continue;
-    const description = line.replace(DATE_RE, "").replace(AMOUNT_RE, "").replace(/\s+/g, " ").trim();
+    const description = row.parts
+      .filter((p) => !amountParts.includes(p) && !DATE_RE.test(p.s.trim()))
+      .map((p) => p.s)
+      .join(" ")
+      .replace(/\s+/g, " ")
+      .trim();
     out.push({ txn_date: date, amount, description, ...payerFrom(description) });
   }
   return out;
@@ -168,7 +217,7 @@ function txnsFromLines(lines: string[]): ExtractedTxn[] {
 export async function extractStatement(file: File): Promise<ExtractedTxn[]> {
   const k = fileKind(file);
   if (k === "csv" || k === "excel") return fromRows(await tableRows(file));
-  if (k === "pdf") return txnsFromLines(await pdfLines(file));
+  if (k === "pdf") return txnsFromRows(await pdfRows(file));
   return [];
 }
 

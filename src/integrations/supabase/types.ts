@@ -83,6 +83,7 @@ export type Database = {
         Row: {
           account: string | null
           amount: number
+          assigned_contract_id: string | null
           bank: string | null
           created_at: string
           description: string
@@ -100,6 +101,7 @@ export type Database = {
         Insert: {
           account?: string | null
           amount: number
+          assigned_contract_id?: string | null
           bank?: string | null
           created_at?: string
           description?: string
@@ -117,6 +119,7 @@ export type Database = {
         Update: {
           account?: string | null
           amount?: number
+          assigned_contract_id?: string | null
           bank?: string | null
           created_at?: string
           description?: string
@@ -133,6 +136,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "bank_transactions_assigned_contract_id_fkey"
+            columns: ["assigned_contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "bank_transactions_document_id_fkey"
             columns: ["document_id"]
             isOneToOne: false
@@ -142,6 +152,44 @@ export type Database = {
           {
             foreignKeyName: "bank_transactions_suggested_contract_id_fkey"
             columns: ["suggested_contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contract_payer_aliases: {
+        Row: {
+          contract_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          payer_name: string | null
+          payer_rut: string | null
+          updated_at: string
+        }
+        Insert: {
+          contract_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          payer_name?: string | null
+          payer_rut?: string | null
+          updated_at?: string
+        }
+        Update: {
+          contract_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          payer_name?: string | null
+          payer_rut?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_payer_aliases_contract_id_fkey"
+            columns: ["contract_id"]
             isOneToOne: false
             referencedRelation: "contracts"
             referencedColumns: ["id"]
